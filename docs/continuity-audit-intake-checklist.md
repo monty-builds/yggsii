@@ -100,11 +100,12 @@ If the material is too large, offer a pilot audit on the first act or one narrat
 ## Current packaging state
 
 The service now has:
-- a sample output
+- a linear-story sample output
+- a campaign-adaptation sample output
 - an intake checklist
 - a one-page offer sheet
 - a mock-client pressure test
 
 ## Next packaging move
 
-Create a second sample shaped around campaign or adaptation material so the offer proves itself outside a neat linear story.
+Turn the campaign sample into a lighter reusable template or checklist artifact, especially around reveal ledgers and knowledge-state tracking.

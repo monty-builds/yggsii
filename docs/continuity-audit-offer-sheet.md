@@ -115,7 +115,8 @@ That means every audit can improve:
 
 ## Companion documents
 
-- sample output: `sample-continuity-audit.md`
+- sample output, linear story: `sample-continuity-audit.md`
+- sample output, campaign adaptation: `sample-continuity-audit-campaign.md`
 - intake path: `continuity-audit-intake-checklist.md`
 
 ## Next validation move
