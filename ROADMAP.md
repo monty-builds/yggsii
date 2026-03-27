@@ -121,10 +121,12 @@ Import and export are now in place.
 
 Safer editing flows now include character and location deletion with dependency-aware cleanup.
 
-The read-only manuscript assembly view is now in place as well, which means the next most natural build target is search and filtering.
+The read-only manuscript assembly view is now in place as well.
+
+A first pass of search and filtering is now in place on the timeline, covering text, character, location, and status filters with state preserved while navigating.
 
 ## Practical next move
 
-If work resumes immediately, build search and filtering.
+If work resumes immediately, deepen search and filtering beyond the timeline.
 
-That is the highest leverage improvement now because it makes the app usable on larger projects and strengthens the core narrative-debugging pitch.
+Good next slices would be workspace-wide search results, filter chips, and jumping straight from a result into the relevant scene, character, or location.

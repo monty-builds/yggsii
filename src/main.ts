@@ -56,6 +56,13 @@ type ProjectBackup = {
   project: StoryProject
 }
 
+type TimelineFilters = {
+  query: string
+  characterId: string
+  locationId: string
+  status: '' | Scene['status']
+}
+
 type AppState = {
   projects: StoryProject[]
   activeProjectId: Id
@@ -64,10 +71,18 @@ type AppState = {
   activeCharacterId?: Id
   theme: 'dark' | 'light'
   view: 'workspace' | 'timeline' | 'meetings' | 'manuscript'
+  timelineFilters: TimelineFilters
 }
 
 const STORAGE_KEY = 'yggsii-mvp-v1'
 const BACKUP_SCHEMA_VERSION = 1
+
+const emptyTimelineFilters = (): TimelineFilters => ({
+  query: '',
+  characterId: '',
+  locationId: '',
+  status: '',
+})
 
 const colors = ['#8b5cf6', '#0ea5e9', '#22c55e', '#f97316', '#ec4899', '#eab308']
 
@@ -167,6 +182,7 @@ const defaultState = (): AppState => {
     activeCharacterId: project.characters[0]?.id,
     theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light',
     view: 'workspace',
+    timelineFilters: emptyTimelineFilters(),
   }
 }
 
@@ -177,9 +193,16 @@ function loadState(): AppState {
   const raw = localStorage.getItem(STORAGE_KEY)
   if (!raw) return defaultState()
   try {
-    const parsed = JSON.parse(raw) as AppState
+    const parsed = JSON.parse(raw) as Partial<AppState>
     if (!parsed.projects?.length) return defaultState()
-    return parsed
+    return {
+      ...defaultState(),
+      ...parsed,
+      timelineFilters: {
+        ...emptyTimelineFilters(),
+        ...(parsed.timelineFilters ?? {}),
+      },
+    }
   } catch {
     return defaultState()
   }
@@ -573,32 +596,73 @@ function renderCharacterEditor(project: StoryProject, character: Character) {
   `
 }
 
+function sceneMatchesTimelineFilters(project: StoryProject, scene: Scene, filters: TimelineFilters) {
+  const location = sceneLocation(project, scene)
+  const cast = scene.characterIds.map((id) => characterById(project, id)).filter(Boolean) as Character[]
+  const haystack = [
+    scene.title,
+    scene.summary,
+    scene.content,
+    scene.timeLabel,
+    location?.name || '',
+    location?.details || '',
+    ...cast.flatMap((character) => [character.name, character.role, character.notes]),
+  ].join(' ').toLowerCase()
+  const query = filters.query.trim().toLowerCase()
+
+  if (query && !haystack.includes(query)) return false
+  if (filters.characterId && !scene.characterIds.includes(filters.characterId)) return false
+  if (filters.locationId && scene.locationId !== filters.locationId) return false
+  if (filters.status && scene.status !== filters.status) return false
+  return true
+}
+
 function renderTimeline(project: StoryProject, scenes: Scene[]) {
+  const filters = state.timelineFilters
+  const filteredScenes = scenes.filter((scene) => sceneMatchesTimelineFilters(project, scene, filters))
+  const characterOptions = [`<option value="">All characters</option>`]
+    .concat(project.characters.map((character) => `<option value="${character.id}" ${character.id === filters.characterId ? 'selected' : ''}>${escapeHtml(character.name)}</option>`))
+    .join('')
+  const locationOptions = [`<option value="">All locations</option>`]
+    .concat(project.locations.map((location) => `<option value="${location.id}" ${location.id === filters.locationId ? 'selected' : ''}>${escapeHtml(location.name)}</option>`))
+    .join('')
+
   return `
     <section class="panel timeline-panel">
       <div class="section-head"><h3>Scene timeline</h3><p class="muted">Tracks order, cast, place, and chapter at a glance.</p></div>
+      <div class="timeline-filters panel-subtle">
+        <label>Search<input id="timeline-query" placeholder="Search scenes, characters, or locations" value="${escapeAttr(filters.query)}" /></label>
+        <div class="split-3">
+          <label>Character<select id="timeline-character">${characterOptions}</select></label>
+          <label>Location<select id="timeline-location">${locationOptions}</select></label>
+          <label>Status<select id="timeline-status"><option value="">All statuses</option><option value="draft" ${filters.status === 'draft' ? 'selected' : ''}>draft</option><option value="outline" ${filters.status === 'outline' ? 'selected' : ''}>outline</option><option value="revised" ${filters.status === 'revised' ? 'selected' : ''}>revised</option></select></label>
+        </div>
+        <p class="muted">Showing ${filteredScenes.length} of ${scenes.length} scene${scenes.length === 1 ? '' : 's'}.</p>
+      </div>
       <div class="timeline-list">
-        ${scenes
-          .map((scene) => {
-            const chapter = sceneChapter(project, scene)
-            const location = sceneLocation(project, scene)
-            const cast = scene.characterIds.map((id) => characterById(project, id)?.name).filter(Boolean).join(', ')
-            return `
-              <article class="timeline-card">
-                <div class="timeline-order">${scene.order}</div>
-                <div>
-                  <p class="eyebrow">${escapeHtml(scene.timeLabel || 'Unscheduled')} · ${escapeHtml(chapter?.title || 'No chapter')}</p>
-                  <h3>${escapeHtml(scene.title)}</h3>
-                  <p>${escapeHtml(scene.summary)}</p>
-                  <div class="tag-row">
-                    <span>${escapeHtml(location?.name || 'No location')}</span>
-                    <span>${escapeHtml(scene.status)}</span>
-                    <span>${escapeHtml(cast || 'No characters')}</span>
-                  </div>
-                </div>
-              </article>`
-          })
-          .join('')}
+        ${filteredScenes.length
+          ? filteredScenes
+              .map((scene) => {
+                const chapter = sceneChapter(project, scene)
+                const location = sceneLocation(project, scene)
+                const cast = scene.characterIds.map((id) => characterById(project, id)?.name).filter(Boolean).join(', ')
+                return `
+                  <article class="timeline-card">
+                    <div class="timeline-order">${scene.order}</div>
+                    <div>
+                      <p class="eyebrow">${escapeHtml(scene.timeLabel || 'Unscheduled')} · ${escapeHtml(chapter?.title || 'No chapter')}</p>
+                      <h3>${escapeHtml(scene.title)}</h3>
+                      <p>${escapeHtml(scene.summary)}</p>
+                      <div class="tag-row">
+                        <span>${escapeHtml(location?.name || 'No location')}</span>
+                        <span>${escapeHtml(scene.status)}</span>
+                        <span>${escapeHtml(cast || 'No characters')}</span>
+                      </div>
+                    </div>
+                  </article>`
+              })
+              .join('')
+          : '<p class="muted">No scenes match the current filters.</p>'}
       </div>
     </section>
   `
@@ -792,6 +856,10 @@ function bindEvents(project: StoryProject, activeScene?: Scene, activeCharacter?
   bindInput('story-premise', (value) => update(() => { project.premise = value; stamp(project) }))
   bindInput('story-genre', (value) => update(() => { project.genre = value; stamp(project) }))
   bindInput('story-viewpoint', (value) => update(() => { project.viewpoint = value; stamp(project) }))
+  bindInput('timeline-query', (value) => update((draft) => { draft.timelineFilters.query = value }))
+  bindInput('timeline-character', (value) => update((draft) => { draft.timelineFilters.characterId = value }))
+  bindInput('timeline-location', (value) => update((draft) => { draft.timelineFilters.locationId = value }))
+  bindInput('timeline-status', (value) => update((draft) => { draft.timelineFilters.status = value as TimelineFilters['status'] }))
 
   if (activeScene) {
     bindInput('scene-title', (value) => update(() => { activeScene.title = value; stamp(project) }))
