@@ -72,6 +72,7 @@ type AppState = {
   theme: 'dark' | 'light'
   view: 'workspace' | 'timeline' | 'meetings' | 'manuscript'
   timelineFilters: TimelineFilters
+  workspaceQuery: string
 }
 
 const STORAGE_KEY = 'yggsii-mvp-v1'
@@ -183,6 +184,7 @@ const defaultState = (): AppState => {
     theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light',
     view: 'workspace',
     timelineFilters: emptyTimelineFilters(),
+    workspaceQuery: '',
   }
 }
 
@@ -479,11 +481,65 @@ function render() {
   bindEvents(project, activeScene, activeCharacter)
 }
 
+type WorkspaceSearchResult = {
+  type: 'scene' | 'character' | 'location'
+  id: string
+  chapterId?: string
+  title: string
+  meta: string
+}
+
+function workspaceSearchResults(project: StoryProject, query: string): WorkspaceSearchResult[] {
+  const needle = query.trim().toLowerCase()
+  if (!needle) return []
+
+  const sceneResults = sortedScenes(project)
+    .filter((scene) => [scene.title, scene.summary, scene.content, scene.timeLabel].join(' ').toLowerCase().includes(needle))
+    .map((scene) => ({
+      type: 'scene' as const,
+      id: scene.id,
+      chapterId: scene.chapterId,
+      title: scene.title || 'Untitled scene',
+      meta: `${scene.timeLabel || 'Unscheduled'} · ${sceneChapter(project, scene)?.title || 'No chapter'}`,
+    }))
+
+  const characterResults = project.characters
+    .filter((character) => [character.name, character.role, character.notes].join(' ').toLowerCase().includes(needle))
+    .map((character) => ({
+      type: 'character' as const,
+      id: character.id,
+      title: character.name,
+      meta: character.role || 'Character',
+    }))
+
+  const locationResults = project.locations
+    .filter((location) => [location.name, location.details].join(' ').toLowerCase().includes(needle))
+    .map((location) => ({
+      type: 'location' as const,
+      id: location.id,
+      title: location.name,
+      meta: location.details || 'Location',
+    }))
+
+  return [...sceneResults, ...characterResults, ...locationResults].slice(0, 12)
+}
+
 function renderWorkspace(project: StoryProject, chapters: Chapter[], scenes: Scene[], activeScene?: Scene, activeCharacter?: Character) {
+  const results = workspaceSearchResults(project, state.workspaceQuery)
   return `
     <section class="workspace-grid">
       <div class="panel column-list">
         <div class="section-head"><h3>Chapters and scenes</h3><button data-action="add-chapter">Add chapter</button></div>
+        <div class="panel-subtle workspace-search-panel">
+          <label>Workspace search<input id="workspace-query" placeholder="Search scenes, characters, and locations" value="${escapeAttr(state.workspaceQuery)}" /></label>
+          ${state.workspaceQuery.trim()
+            ? results.length
+              ? `<div class="mini-list search-results">${results
+                  .map((result) => `<button class="search-result" data-action="open-search-result" data-result-type="${result.type}" data-result-id="${result.id}" data-chapter-id="${result.chapterId || ''}"><strong>${escapeHtml(result.title)}</strong><span>${escapeHtml(result.type)} · ${escapeHtml(result.meta)}</span></button>`)
+                  .join('')}</div>`
+              : '<p class="muted">No workspace matches yet.</p>'
+            : '<p class="muted">Search across scenes, characters, and locations.</p>'}
+        </div>
         ${chapters
           .map((chapter) => {
             const chapterScenes = scenes.filter((scene) => scene.chapterId === chapter.id)
@@ -820,6 +876,16 @@ function bindEvents(project: StoryProject, activeScene?: Scene, activeCharacter?
     draft.activeSceneId = element.dataset.sceneId!
     draft.activeChapterId = element.dataset.chapterId!
   }))
+  on('[data-action="open-search-result"]', (element) => update((draft) => {
+    draft.view = 'workspace'
+    const resultType = element.dataset.resultType
+    const resultId = element.dataset.resultId!
+    if (resultType === 'scene') {
+      draft.activeSceneId = resultId
+      draft.activeChapterId = element.dataset.chapterId || draft.activeChapterId
+    }
+    if (resultType === 'character') draft.activeCharacterId = resultId
+  }))
   on('[data-chapter-id]', (element) => update((draft) => { draft.activeChapterId = element.dataset.chapterId! }))
   on('[data-scene-id]', (element) => update((draft) => { draft.activeSceneId = element.dataset.sceneId! }))
   on('[data-character-id]', (element) => update((draft) => { draft.activeCharacterId = element.dataset.characterId! }))
@@ -883,6 +949,7 @@ function bindEvents(project: StoryProject, activeScene?: Scene, activeCharacter?
   bindInput('story-premise', (value) => update(() => { project.premise = value; stamp(project) }))
   bindInput('story-genre', (value) => update(() => { project.genre = value; stamp(project) }))
   bindInput('story-viewpoint', (value) => update(() => { project.viewpoint = value; stamp(project) }))
+  bindInput('workspace-query', (value) => update((draft) => { draft.workspaceQuery = value }))
   bindInput('timeline-query', (value) => update((draft) => { draft.timelineFilters.query = value }))
   bindInput('timeline-character', (value) => update((draft) => { draft.timelineFilters.characterId = value }))
   bindInput('timeline-location', (value) => update((draft) => { draft.timelineFilters.locationId = value }))

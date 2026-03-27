@@ -22,6 +22,7 @@ Why:
 - create and switch between projects
 - CRUD-style editing for story metadata, scenes, characters, and locations
 - chapter and scene navigation column
+- workspace search across scenes, characters, and locations, with direct jump back into scene or character context
 - structured scene editor with summary, draft text, timeline label, chapter assignment, status, location, and character presence
 - character inspector showing scene appearances
 - timeline view showing scene order, chapter, location, cast, and status
