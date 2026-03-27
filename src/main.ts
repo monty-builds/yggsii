@@ -841,7 +841,7 @@ function renderMeetings(project: StoryProject, scenes: Scene[]) {
   return `
     <section class="panel meetings-panel">
       <div class="section-head"><h3>Character meetings</h3><p class="muted">A quick relationship surface for who shares scenes and when.</p></div>
-      ${activeScene && activeNames.length > 2 ? `<div class="panel-subtle arrival-note"><p class="muted">Current scene cast: ${escapeHtml(activeNames.join(', '))}. Pair highlighting is partial here because the scene has more than two characters.</p></div>` : ''}
+      ${activeScene && activeNames.length > 2 ? `<div class="panel-subtle arrival-note"><p class="muted">Current scene cast: ${escapeHtml(activeNames.join(', '))}. Pair highlighting is partial here because the scene has more than two characters.</p><p class="manuscript-link-row"><button class="search-result" data-action="open-scene-from-meetings" data-scene-id="${activeScene.id}" data-chapter-id="${activeScene.chapterId}">Return to the current scene editor</button></p></div>` : ''}
       <div class="meeting-grid">
         ${rows.length
           ? rows
@@ -983,6 +983,11 @@ function bindEvents(project: StoryProject, activeScene?: Scene, activeCharacter?
     draft.activeChapterId = element.dataset.chapterId || draft.activeChapterId
   }))
   on('[data-action="open-scene-from-manuscript"]', (element) => update((draft) => {
+    draft.view = 'workspace'
+    draft.activeSceneId = element.dataset.sceneId!
+    draft.activeChapterId = element.dataset.chapterId || draft.activeChapterId
+  }))
+  on('[data-action="open-scene-from-meetings"]', (element) => update((draft) => {
     draft.view = 'workspace'
     draft.activeSceneId = element.dataset.sceneId!
     draft.activeChapterId = element.dataset.chapterId || draft.activeChapterId
