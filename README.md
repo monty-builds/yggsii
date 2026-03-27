@@ -23,7 +23,7 @@ Why:
 - CRUD-style editing for story metadata, scenes, characters, and locations
 - chapter and scene navigation column
 - workspace search across scenes, characters, and locations, grouped by entity type, with simple result ranking and direct jump back into scene, character, or location context
-- location inspector showing linked scenes and editable location details
+- location inspector showing linked scenes, editable location details, and direct jump into linked scene editing
 - structured scene editor with summary, draft text, timeline label, chapter assignment, status, location, and character presence
 - character inspector showing scene appearances
 - timeline view showing scene order, chapter, location, cast, and status
