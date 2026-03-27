@@ -151,6 +151,12 @@ h1, h2, h3, p { margin-top: 0; }
   text-align: left;
   background: var(--panel-strong);
 }
+.search-result-hint {
+  display: block;
+  margin-top: 0.4rem;
+  color: var(--muted);
+  font-size: 0.86rem;
+}
 .workspace-search-panel {
   margin-bottom: 1rem;
 }

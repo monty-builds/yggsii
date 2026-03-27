@@ -535,7 +535,7 @@ function renderWorkspace(project: StoryProject, chapters: Chapter[], scenes: Sce
           ${state.workspaceQuery.trim()
             ? results.length
               ? `<div class="mini-list search-results">${results
-                  .map((result) => `<button class="search-result" data-action="open-search-result" data-result-type="${result.type}" data-result-id="${result.id}" data-chapter-id="${result.chapterId || ''}"><strong>${escapeHtml(result.title)}</strong><span>${escapeHtml(result.type)} · ${escapeHtml(result.meta)}</span></button>`)
+                  .map((result) => `<button class="search-result" data-action="open-search-result" data-result-type="${result.type}" data-result-id="${result.id}" data-chapter-id="${result.chapterId || ''}"><strong>${escapeHtml(result.title)}</strong><span>${escapeHtml(result.type)} · ${escapeHtml(result.meta)}</span><span class="search-result-hint">${result.type === 'location' ? 'Open in timeline filter' : 'Open in workspace'}</span></button>`)
                   .join('')}</div>`
               : '<p class="muted">No workspace matches yet.</p>'
             : '<p class="muted">Search across scenes, characters, and locations.</p>'}
@@ -877,14 +877,21 @@ function bindEvents(project: StoryProject, activeScene?: Scene, activeCharacter?
     draft.activeChapterId = element.dataset.chapterId!
   }))
   on('[data-action="open-search-result"]', (element) => update((draft) => {
-    draft.view = 'workspace'
     const resultType = element.dataset.resultType
     const resultId = element.dataset.resultId!
     if (resultType === 'scene') {
+      draft.view = 'workspace'
       draft.activeSceneId = resultId
       draft.activeChapterId = element.dataset.chapterId || draft.activeChapterId
     }
-    if (resultType === 'character') draft.activeCharacterId = resultId
+    if (resultType === 'character') {
+      draft.view = 'workspace'
+      draft.activeCharacterId = resultId
+    }
+    if (resultType === 'location') {
+      draft.view = 'timeline'
+      draft.timelineFilters.locationId = resultId
+    }
   }))
   on('[data-chapter-id]', (element) => update((draft) => { draft.activeChapterId = element.dataset.chapterId! }))
   on('[data-scene-id]', (element) => update((draft) => { draft.activeSceneId = element.dataset.sceneId! }))

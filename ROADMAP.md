@@ -137,4 +137,6 @@ Timeline results now jump directly back into the workspace scene editor.
 
 Active filter chips are now in place too.
 
-A first workspace-wide search layer is now in place across scenes, characters, and locations, so the next ergonomic gain is probably richer result handling, especially location jumps and search-result grouping.
+A first workspace-wide search layer is now in place across scenes, characters, and locations.
+
+Location results now hand off directly into timeline filtering, so the next ergonomic gain is probably search-result grouping and richer location inspection inside the workspace itself.
