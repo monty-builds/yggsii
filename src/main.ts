@@ -693,7 +693,11 @@ function renderCharacterEditor(project: StoryProject, character: Character) {
     <label>Notes<textarea id="character-notes">${escapeHtml(character.notes)}</textarea></label>
     <p class="muted">Appears in ${appearances.length} scene${appearances.length === 1 ? '' : 's'}.</p>
     <div class="mini-list">
-      ${appearances.length ? appearances.map((scene) => `<div><strong>${scene.order}. ${escapeHtml(scene.title)}</strong><span>${escapeHtml(scene.timeLabel)}</span></div>`).join('') : '<p class="muted">No scene appearances yet.</p>'}
+      ${appearances.length
+        ? appearances
+            .map((scene) => `<button class="search-result" data-action="open-scene-from-character" data-scene-id="${scene.id}" data-chapter-id="${scene.chapterId}"><strong>${scene.order}. ${escapeHtml(scene.title)}</strong><span>${escapeHtml(scene.timeLabel)}</span><span class="search-result-hint">Open in scene editor</span></button>`)
+            .join('')
+        : '<p class="muted">No scene appearances yet.</p>'}
     </div>
   `
 }
@@ -961,6 +965,11 @@ function bindEvents(project: StoryProject, activeScene?: Scene, activeCharacter?
     }
   }))
   on('[data-action="open-scene-from-location"]', (element) => update((draft) => {
+    draft.view = 'workspace'
+    draft.activeSceneId = element.dataset.sceneId!
+    draft.activeChapterId = element.dataset.chapterId || draft.activeChapterId
+  }))
+  on('[data-action="open-scene-from-character"]', (element) => update((draft) => {
     draft.view = 'workspace'
     draft.activeSceneId = element.dataset.sceneId!
     draft.activeChapterId = element.dataset.chapterId || draft.activeChapterId

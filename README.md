@@ -25,7 +25,7 @@ Why:
 - workspace search across scenes, characters, and locations, grouped by entity type, with simple result ranking and direct jump back into scene, character, or location context
 - location inspector showing linked scenes, editable location details, and direct jump into linked scene editing
 - structured scene editor with summary, draft text, timeline label, chapter assignment, status, location, and character presence
-- character inspector showing scene appearances
+- character inspector showing scene appearances with direct jump into scene editing
 - timeline view showing scene order, chapter, location, cast, and status
 - timeline search and filtering by text, character, location, and status, with filter state preserved while navigating
 - character meetings view showing who shares scenes and how often
