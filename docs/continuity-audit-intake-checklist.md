@@ -11,14 +11,14 @@ The aim is to reduce messy submissions, control manual labour, and make the serv
 The client should send one of the following:
 
 ### Option A, preferred
-- scene list with scene titles in order
-- one to three sentence summary for each scene
+- scene list or ordered session recap list
+- one to three sentence summary for each scene or session
 - character list
 - location list
-- any time labels, chapter labels, or POV labels already in use
+- any time labels, chapter labels, session labels, or POV labels already in use
 
 ### Option B
-- chapter-by-chapter synopsis
+- chapter-by-chapter synopsis, or ordered campaign recap notes
 - cast list with short role notes
 - location list if the story uses many recurring places
 
@@ -51,12 +51,13 @@ Use these at intake so the audit can focus on the right failure modes.
 ### Core framing
 - What kind of story is this, novel, game narrative, campaign, fanfiction, or something else?
 - What stage is it at, outline, rough draft, partial rewrite, or near-finished?
-- What worries you most right now, timeline logic, character continuity, location consistency, relationship threads, or general coherence?
+- What worries you most right now, timeline logic, character continuity, location consistency, relationship threads, knowledge-state logic, or general coherence?
 
 ### Continuity-specific prompts
 - Are there any scenes you already suspect are causing continuity trouble?
-- Are there hidden identities, secret knowledge, or timeline jumps that need special care?
+- Are there hidden identities, secret knowledge, unreliable viewpoints, or timeline jumps that need special care?
 - Are there any canon constraints, lore rules, or worldbuilding rules the audit should treat as fixed?
+- Are there places where the key risk is who knows what, when, rather than where people physically are?
 - Which characters or relationships are most important not to mishandle?
 
 ### Delivery preferences
@@ -96,6 +97,14 @@ Before accepting work, estimate:
 
 If the material is too large, offer a pilot audit on the first act or one narrative arc instead.
 
+## Current packaging state
+
+The service now has:
+- a sample output
+- an intake checklist
+- a one-page offer sheet
+- a mock-client pressure test
+
 ## Next packaging move
 
-Pair this checklist with a one-page offer sheet so the service has both an intake path and a visible promise.
+Create a second sample shaped around campaign or adaptation material so the offer proves itself outside a neat linear story.

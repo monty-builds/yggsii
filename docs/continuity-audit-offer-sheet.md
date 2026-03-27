@@ -15,7 +15,9 @@ Typical pain points:
 - missing character presence logic
 - location continuity drift
 - dropped relationship threads
-- scenes that feel disconnected even though the prose itself is fine
+- knowledge-state confusion, especially who knows what, when
+- secret reveals or canon constraints that stop lining up cleanly
+- scenes or session recaps that feel disconnected even though the prose itself is fine
 
 ## What the client gets
 
@@ -35,9 +37,10 @@ Optional follow-on later, not default:
 
 This is best suited to:
 - novels with complicated chronology or ensemble casts
-- tabletop campaigns that need recap and continuity control
+- tabletop campaigns that need recap, adaptation, and continuity control
 - game or interactive narrative outlines
 - fanfiction with canon constraints, multiple POVs, or large casts
+- projects being reshaped from session notes or recap material into cleaner narrative form
 
 ## Early scope guardrails
 
@@ -58,15 +61,16 @@ Not included in the base offer:
 ## Input formats
 
 Preferred input:
-- scene list in order
-- one to three sentence summary per scene
+- scene list in order, or ordered session recaps
+- one to three sentence summary per scene or session
 - character list
 - location list
-- any time labels, chapter labels, or POV labels already in use
+- any time labels, chapter labels, session labels, or POV labels already in use
 
 Other workable input:
 - chapter-by-chapter synopsis
 - cast list with short role notes
+- ordered recap notes for campaign or adaptation material
 - exported Yggsii project JSON later
 
 ## Turnaround shape
@@ -84,7 +88,7 @@ This is not framed as "buy my writing app".
 
 It is framed as:
 
-I will find continuity breaks, missing appearances, chronology tangles, and structural weak points before they turn into rewrite debt.
+I will find continuity breaks, missing appearances, chronology tangles, knowledge-state slips, and structural weak points before they turn into rewrite debt.
 
 ## Pricing shape, provisional
 
