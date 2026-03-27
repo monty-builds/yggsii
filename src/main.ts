@@ -534,9 +534,15 @@ function renderWorkspace(project: StoryProject, chapters: Chapter[], scenes: Sce
           <label>Workspace search<input id="workspace-query" placeholder="Search scenes, characters, and locations" value="${escapeAttr(state.workspaceQuery)}" /></label>
           ${state.workspaceQuery.trim()
             ? results.length
-              ? `<div class="mini-list search-results">${results
-                  .map((result) => `<button class="search-result" data-action="open-search-result" data-result-type="${result.type}" data-result-id="${result.id}" data-chapter-id="${result.chapterId || ''}"><strong>${escapeHtml(result.title)}</strong><span>${escapeHtml(result.type)} · ${escapeHtml(result.meta)}</span><span class="search-result-hint">${result.type === 'location' ? 'Open in timeline filter' : 'Open in workspace'}</span></button>`)
-                  .join('')}</div>`
+              ? `${(['scene', 'character', 'location'] as const)
+                  .map((type) => {
+                    const rows = results.filter((result) => result.type === type)
+                    if (!rows.length) return ''
+                    return `<div class="search-group"><p class="eyebrow">${type === 'scene' ? 'Scenes' : type === 'character' ? 'Characters' : 'Locations'}</p><div class="mini-list search-results">${rows
+                      .map((result) => `<button class="search-result" data-action="open-search-result" data-result-type="${result.type}" data-result-id="${result.id}" data-chapter-id="${result.chapterId || ''}"><strong>${escapeHtml(result.title)}</strong><span>${escapeHtml(result.type)} · ${escapeHtml(result.meta)}</span><span class="search-result-hint">${result.type === 'location' ? 'Open in timeline filter' : 'Open in workspace'}</span></button>`)
+                      .join('')}</div></div>`
+                  })
+                  .join('')}`
               : '<p class="muted">No workspace matches yet.</p>'
             : '<p class="muted">Search across scenes, characters, and locations.</p>'}
         </div>

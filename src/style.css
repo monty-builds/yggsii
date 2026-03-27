@@ -163,6 +163,12 @@ h1, h2, h3, p { margin-top: 0; }
 .search-results {
   margin-top: 0.75rem;
 }
+.search-group {
+  margin-top: 0.9rem;
+}
+.search-group:first-of-type {
+  margin-top: 0.75rem;
+}
 .location-item {
   display: flex;
   align-items: flex-start;
