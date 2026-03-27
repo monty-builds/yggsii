@@ -143,6 +143,6 @@ Workspace search results are now grouped by entity type, and locations now have 
 
 A first ranking pass is now in place too, and manuscript, location, and character inspection now link directly back into scene editing. Scenes can now jump out to manuscript, timeline, and meetings views as well.
 
-Active-scene arrival highlighting is now in place for timeline and manuscript, and meetings now highlight the active character pair when the current scene contains exactly two characters.
+Active-scene arrival highlighting is now in place for timeline and manuscript, and meetings now highlight the active character pair when the current scene contains exactly two characters while showing cast-context notes for larger scenes.
 
-The next ergonomic gain is probably richer relevance rules than simple text scoring, plus more nuanced meetings arrival context for scenes with larger casts.
+The next ergonomic gain is probably richer relevance rules than simple text scoring, plus deeper meetings logic for larger ensemble scenes.

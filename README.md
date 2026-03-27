@@ -28,7 +28,7 @@ Why:
 - character inspector showing scene appearances with direct jump into scene editing
 - timeline view showing scene order, chapter, location, cast, and status
 - timeline search and filtering by text, character, location, and status, with filter state preserved while navigating and active-scene highlighting after view jumps
-- character meetings view showing who shares scenes and how often, with active-pair highlighting after scene-view jumps
+- character meetings view showing who shares scenes and how often, with active-pair highlighting for clean two-character arrivals and cast-context notes for larger scenes
 - read-only manuscript assembly view that compiles chapters, scenes, summaries, and draft text, with direct jump back into scene editing
 - dark mode and light mode toggle
 - local persistence with `localStorage`
