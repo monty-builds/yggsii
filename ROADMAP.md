@@ -125,6 +125,8 @@ The read-only manuscript assembly view is now in place as well.
 
 A first pass of search and filtering is now in place on the timeline, covering text, character, location, and status filters with state preserved while navigating.
 
+A clear-filters control is now in place too, which makes the timeline inspection loop less fiddly in real use.
+
 ## Practical next move
 
 If work resumes immediately, deepen search and filtering beyond the timeline.

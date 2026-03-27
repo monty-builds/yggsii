@@ -631,6 +631,10 @@ function renderTimeline(project: StoryProject, scenes: Scene[]) {
     <section class="panel timeline-panel">
       <div class="section-head"><h3>Scene timeline</h3><p class="muted">Tracks order, cast, place, and chapter at a glance.</p></div>
       <div class="timeline-filters panel-subtle">
+        <div class="section-head inline-head">
+          <h3>Filters</h3>
+          <button data-action="clear-timeline-filters">Clear filters</button>
+        </div>
         <label>Search<input id="timeline-query" placeholder="Search scenes, characters, or locations" value="${escapeAttr(filters.query)}" /></label>
         <div class="split-3">
           <label>Character<select id="timeline-character">${characterOptions}</select></label>
@@ -793,6 +797,7 @@ function bindEvents(project: StoryProject, activeScene?: Scene, activeCharacter?
   on('[data-action="project-import"]', () => document.getElementById('project-import-file')?.click())
   on('[data-action="theme-toggle"]', () => update((draft) => { draft.theme = draft.theme === 'dark' ? 'light' : 'dark' }))
   on('[data-action="seed-reset"]', () => { if (confirm('Replace local data with the demo project?')) { state = defaultState(); saveState(); render() } })
+  on('[data-action="clear-timeline-filters"]', () => update((draft) => { draft.timelineFilters = emptyTimelineFilters() }))
   on('[data-chapter-id]', (element) => update((draft) => { draft.activeChapterId = element.dataset.chapterId! }))
   on('[data-scene-id]', (element) => update((draft) => { draft.activeSceneId = element.dataset.sceneId! }))
   on('[data-character-id]', (element) => update((draft) => { draft.activeCharacterId = element.dataset.characterId! }))
