@@ -280,6 +280,9 @@ h1, h2, h3, p { margin-top: 0; }
   line-height: 1.65;
   margin-bottom: 1rem;
 }
+.manuscript-link-row {
+  margin: 0.75rem 0 1rem;
+}
 .muted { color: var(--muted); }
 .danger { color: var(--danger); }
 .locations-head { margin-top: 1.5rem; }

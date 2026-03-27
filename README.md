@@ -29,7 +29,7 @@ Why:
 - timeline view showing scene order, chapter, location, cast, and status
 - timeline search and filtering by text, character, location, and status, with filter state preserved while navigating
 - character meetings view showing who shares scenes and how often
-- read-only manuscript assembly view that compiles chapters, scenes, summaries, and draft text
+- read-only manuscript assembly view that compiles chapters, scenes, summaries, and draft text, with direct jump back into scene editing
 - dark mode and light mode toggle
 - local persistence with `localStorage`
 - project export as versioned JSON backup

@@ -906,6 +906,7 @@ function renderManuscriptScene(project: StoryProject, scene: Scene) {
         <span>${escapeHtml(scene.status)}</span>
         <span>${escapeHtml(cast.join(', ') || 'No characters')}</span>
       </div>
+      <p class="manuscript-link-row"><button class="search-result" data-action="open-scene-from-manuscript" data-scene-id="${scene.id}" data-chapter-id="${scene.chapterId}">Open this scene in the workspace editor</button></p>
       ${scene.summary ? `<p class="scene-summary">${escapeHtml(scene.summary)}</p>` : ''}
       <div class="scene-content-block">${scene.content ? scene.content.split(/\n{2,}/).map((paragraph) => `<p>${escapeHtml(paragraph.trim())}</p>`).join('') : '<p class="muted">No draft text yet.</p>'}</div>
     </section>
@@ -970,6 +971,11 @@ function bindEvents(project: StoryProject, activeScene?: Scene, activeCharacter?
     draft.activeChapterId = element.dataset.chapterId || draft.activeChapterId
   }))
   on('[data-action="open-scene-from-character"]', (element) => update((draft) => {
+    draft.view = 'workspace'
+    draft.activeSceneId = element.dataset.sceneId!
+    draft.activeChapterId = element.dataset.chapterId || draft.activeChapterId
+  }))
+  on('[data-action="open-scene-from-manuscript"]', (element) => update((draft) => {
     draft.view = 'workspace'
     draft.activeSceneId = element.dataset.sceneId!
     draft.activeChapterId = element.dataset.chapterId || draft.activeChapterId
