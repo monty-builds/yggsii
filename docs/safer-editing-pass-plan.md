@@ -98,3 +98,5 @@ A user deleting something important, importing a project, or resetting to the de
 The next worthwhile Yggsii step is probably not more visibility polish.
 
 It is a safer-editing pass focused on destructive actions, import clarity, and reset trust.
+
+For the current daylight execution order, see `safer-editing-daylight-sequence.md`.
