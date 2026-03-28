@@ -36,6 +36,17 @@ type Chapter = {
   order: number
 }
 
+type RevealRecord = {
+  id: Id
+  title: string
+  underlyingTruth: string
+  publicStory: string
+  revealPoint: string
+  notes: string
+  sceneIds: Id[]
+  characterIds: Id[]
+}
+
 type StoryProject = {
   id: Id
   title: string
@@ -46,6 +57,7 @@ type StoryProject = {
   scenes: Scene[]
   characters: Character[]
   locations: Location[]
+  reveals: RevealRecord[]
   createdAt: string
   updatedAt: string
 }
@@ -70,6 +82,7 @@ type AppState = {
   activeSceneId?: Id
   activeCharacterId?: Id
   activeLocationId?: Id
+  activeRevealId?: Id
   theme: 'dark' | 'light'
   view: 'workspace' | 'timeline' | 'meetings' | 'manuscript'
   timelineFilters: TimelineFilters
@@ -159,6 +172,19 @@ const demoProject = (): StoryProject => {
     },
   ]
 
+  const reveals: RevealRecord[] = [
+    {
+      id: makeId(),
+      title: 'The map is grown from civic memory roots',
+      underlyingTruth: 'The impossible map is not forged. It is a living fragment of the Root Archive, which means the city has been encoding memory into biological structures for years.',
+      publicStory: 'Mira has found an anomalous map hidden in a tree ring. It looks forbidden, but not yet politically explosive.',
+      revealPoint: 'Day 2, Morning',
+      notes: 'This is the first major proof that the archive is woven into the city itself, not just stored beneath it.',
+      sceneIds: [scenes[0].id, scenes[3].id],
+      characterIds: [chars[0].id, chars[3].id],
+    },
+  ]
+
   return {
     id: makeId(),
     title: 'The Cartography of Roots',
@@ -169,6 +195,7 @@ const demoProject = (): StoryProject => {
     scenes,
     characters: chars,
     locations,
+    reveals,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   }
@@ -183,6 +210,7 @@ const defaultState = (): AppState => {
     activeSceneId: project.scenes[0]?.id,
     activeCharacterId: project.characters[0]?.id,
     activeLocationId: project.locations[0]?.id,
+    activeRevealId: project.reveals[0]?.id,
     theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light',
     view: 'workspace',
     timelineFilters: emptyTimelineFilters(),
@@ -263,6 +291,9 @@ function ensureSelections(project: StoryProject) {
   if (!project.locations.find((location) => location.id === state.activeLocationId)) {
     state.activeLocationId = project.locations[0]?.id
   }
+  if (!project.reveals.find((reveal) => reveal.id === state.activeRevealId)) {
+    state.activeRevealId = project.reveals[0]?.id
+  }
 }
 
 function createProject() {
@@ -278,6 +309,7 @@ function createProject() {
     scenes: [],
     characters: [],
     locations: [],
+    reveals: [],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   }, true)
@@ -303,12 +335,20 @@ function normalizeProject(project: StoryProject): StoryProject {
     ? project.scenes.map((scene, index) => ({ ...scene, order: Number(scene.order) || index + 1, characterIds: Array.isArray(scene.characterIds) ? scene.characterIds : [] }))
     : [{ id: makeId(), chapterId: chapters[0].id, title: 'Opening scene', summary: '', content: '', order: 1, timeLabel: 'Day 1', characterIds: [], status: 'draft' as const }]
 
+  const characterIds = new Set((project.characters ?? []).map((character) => character.id))
+  const sceneIds = new Set(scenes.map((scene) => scene.id))
+
   return {
     ...project,
     chapters: chapters.map((chapter, index) => ({ ...chapter, order: Number(chapter.order) || index + 1 })),
     scenes,
     characters: (project.characters ?? []).map((character, index) => ({ ...character, color: character.color || colors[index % colors.length] })),
     locations: project.locations ?? [],
+    reveals: (project.reveals ?? []).map((reveal) => ({
+      ...reveal,
+      sceneIds: Array.isArray(reveal.sceneIds) ? reveal.sceneIds.filter((id) => sceneIds.has(id)) : [],
+      characterIds: Array.isArray(reveal.characterIds) ? reveal.characterIds.filter((id) => characterIds.has(id)) : [],
+    })),
     createdAt: project.createdAt || new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   }
@@ -317,7 +357,7 @@ function normalizeProject(project: StoryProject): StoryProject {
 function isStoryProject(value: unknown): value is StoryProject {
   if (!value || typeof value !== 'object') return false
   const project = value as Partial<StoryProject>
-  return typeof project.id === 'string' && typeof project.title === 'string' && Array.isArray(project.chapters) && Array.isArray(project.scenes) && Array.isArray(project.characters) && Array.isArray(project.locations)
+  return typeof project.id === 'string' && typeof project.title === 'string' && Array.isArray(project.chapters) && Array.isArray(project.scenes) && Array.isArray(project.characters) && Array.isArray(project.locations) && Array.isArray(project.reveals ?? [])
 }
 
 function importProjectRecord(project: StoryProject, replaceActive = false) {
@@ -333,6 +373,7 @@ function importProjectRecord(project: StoryProject, replaceActive = false) {
     draft.activeSceneId = sortedScenes(normalized)[0]?.id
     draft.activeCharacterId = normalized.characters[0]?.id
     draft.activeLocationId = normalized.locations[0]?.id
+    draft.activeRevealId = normalized.reveals[0]?.id
   })
 }
 
@@ -383,6 +424,23 @@ function locationReferences(project: StoryProject, locationId: Id) {
   return sortedScenes(project).filter((scene) => scene.locationId === locationId)
 }
 
+function sortedReveals(project: StoryProject) {
+  return [...project.reveals].sort((a, b) => {
+    const aHasRevealPoint = Boolean(a.revealPoint.trim())
+    const bHasRevealPoint = Boolean(b.revealPoint.trim())
+    if (aHasRevealPoint !== bHasRevealPoint) return Number(bHasRevealPoint) - Number(aHasRevealPoint)
+    return a.title.localeCompare(b.title)
+  })
+}
+
+function sceneRevealLinks(project: StoryProject, sceneId: Id) {
+  return sortedReveals(project).filter((reveal) => reveal.sceneIds.includes(sceneId))
+}
+
+function characterRevealLinks(project: StoryProject, characterId: Id) {
+  return sortedReveals(project).filter((reveal) => reveal.characterIds.includes(characterId))
+}
+
 function describeReferencedScenes(scenes: Scene[]) {
   if (!scenes.length) return 'No scenes reference it yet.'
   const preview = scenes.slice(0, 3).map((scene) => `${scene.order}. ${scene.title || 'Untitled scene'}`).join('\n')
@@ -410,12 +468,22 @@ function deleteLocation(locationId: Id) {
   })
 }
 
+function deleteReveal(revealId: Id) {
+  update(() => {
+    const project = getProject()
+    project.reveals = project.reveals.filter((reveal) => reveal.id !== revealId)
+    stamp(project)
+    ensureSelections(project)
+  })
+}
+
 function render() {
   const project = getProject()
   ensureSelections(project)
   document.documentElement.dataset.theme = state.theme
   const activeScene = project.scenes.find((scene) => scene.id === state.activeSceneId) ?? sortedScenes(project)[0]
   const activeCharacter = project.characters.find((character) => character.id === state.activeCharacterId) ?? project.characters[0]
+  const activeReveal = project.reveals.find((reveal) => reveal.id === state.activeRevealId) ?? sortedReveals(project)[0]
   const scenes = sortedScenes(project)
   const chapters = sortedChapters(project)
 
@@ -459,6 +527,7 @@ function render() {
           <div><span>Scenes</span><strong>${project.scenes.length}</strong></div>
           <div><span>Characters</span><strong>${project.characters.length}</strong></div>
           <div><span>Locations</span><strong>${project.locations.length}</strong></div>
+          <div><span>Reveals</span><strong>${project.reveals.length}</strong></div>
         </section>
       </aside>
 
@@ -476,7 +545,7 @@ function render() {
           </div>
         </header>
         <input id="project-import-file" type="file" accept="application/json,.json,.yggsii.json" hidden />
-        ${state.view === 'workspace' ? renderWorkspace(project, chapters, scenes, activeScene, activeCharacter) : ''}
+        ${state.view === 'workspace' ? renderWorkspace(project, chapters, scenes, activeScene, activeCharacter, activeReveal) : ''}
         ${state.view === 'timeline' ? renderTimeline(project, scenes) : ''}
         ${state.view === 'meetings' ? renderMeetings(project, scenes) : ''}
         ${state.view === 'manuscript' ? renderManuscript(project, scenes) : ''}
@@ -484,7 +553,7 @@ function render() {
     </div>
   `
 
-  bindEvents(project, activeScene, activeCharacter)
+  bindEvents(project, activeScene, activeCharacter, activeReveal)
 }
 
 type WorkspaceSearchResult = {
@@ -562,9 +631,10 @@ function workspaceSearchResults(project: StoryProject, query: string): Workspace
     .slice(0, 12)
 }
 
-function renderWorkspace(project: StoryProject, chapters: Chapter[], scenes: Scene[], activeScene?: Scene, activeCharacter?: Character) {
+function renderWorkspace(project: StoryProject, chapters: Chapter[], scenes: Scene[], activeScene?: Scene, activeCharacter?: Character, activeReveal?: RevealRecord) {
   const activeLocation = project.locations.find((location) => location.id === state.activeLocationId) ?? project.locations[0]
   const results = workspaceSearchResults(project, state.workspaceQuery)
+  const revealRows = sortedReveals(project)
   return `
     <section class="workspace-grid">
       <div class="panel column-list">
@@ -639,6 +709,15 @@ function renderWorkspace(project: StoryProject, chapters: Chapter[], scenes: Sce
             .join('')}
         </div>
         ${activeLocation ? renderLocationEditor(project, activeLocation) : '<p class="muted">No location selected yet.</p>'}
+        <div class="section-head locations-head"><h3>Reveals</h3><button data-action="add-reveal">Add reveal</button></div>
+        <div class="reveal-list mini-list">
+          ${revealRows.length
+            ? revealRows
+                .map((reveal) => `<button class="search-result ${reveal.id === activeReveal?.id ? 'active' : ''}" data-reveal-id="${reveal.id}"><strong>${escapeHtml(reveal.title || 'Untitled reveal')}</strong><span>${escapeHtml(reveal.publicStory || 'No public story yet.')}</span><span class="search-result-hint">${escapeHtml(reveal.revealPoint || 'No reveal point')} · ${reveal.sceneIds.length} scene link${reveal.sceneIds.length === 1 ? '' : 's'} · ${reveal.characterIds.length} character link${reveal.characterIds.length === 1 ? '' : 's'}</span></button>`)
+                .join('')
+            : '<p class="muted">No reveal records yet.</p>'}
+        </div>
+        ${activeReveal ? renderRevealEditor(project, activeReveal) : '<p class="muted">No reveal selected yet.</p>'}
       </div>
     </section>
   `
@@ -651,6 +730,7 @@ function renderSceneEditor(project: StoryProject, scene: Scene) {
   const locationOptions = [`<option value="">No location</option>`]
     .concat(project.locations.map((location) => `<option value="${location.id}" ${location.id === scene.locationId ? 'selected' : ''}>${escapeHtml(location.name)}</option>`))
     .join('')
+  const revealLinks = sceneRevealLinks(project, scene.id)
 
   return `
     <div class="section-head"><h3>Scene editor</h3><div class="toolbar compact"><button data-action="open-scene-in-manuscript" data-scene-id="${scene.id}" data-chapter-id="${scene.chapterId}">Open in manuscript</button><button data-action="open-scene-in-timeline" data-scene-id="${scene.id}" data-chapter-id="${scene.chapterId}">Open in timeline</button><button data-action="open-scene-in-meetings" data-scene-id="${scene.id}" data-chapter-id="${scene.chapterId}">Open in meetings</button><button class="danger" data-action="delete-scene" data-scene-id="${scene.id}">Delete</button></div></div>
@@ -670,6 +750,7 @@ function renderSceneEditor(project: StoryProject, scene: Scene) {
     <label>Location<select id="scene-location">${locationOptions}</select></label>
     <label>Summary<textarea id="scene-summary">${escapeHtml(scene.summary)}</textarea></label>
     <label>Draft text<textarea id="scene-content" class="large">${escapeHtml(scene.content)}</textarea></label>
+    <p class="muted">Linked reveal records: ${revealLinks.length}.</p>
     <fieldset class="character-picker">
       <legend>Characters in this scene</legend>
       ${project.characters
@@ -683,6 +764,7 @@ function renderSceneEditor(project: StoryProject, scene: Scene) {
 
 function renderCharacterEditor(project: StoryProject, character: Character) {
   const appearances = characterAppearances(project, character.id)
+  const reveals = characterRevealLinks(project, character.id)
   return `
     <div class="section-head inline-head">
       <h3>Character editor</h3>
@@ -691,7 +773,7 @@ function renderCharacterEditor(project: StoryProject, character: Character) {
     <label>Name<input id="character-name" value="${escapeAttr(character.name)}" /></label>
     <label>Role<input id="character-role" value="${escapeAttr(character.role)}" /></label>
     <label>Notes<textarea id="character-notes">${escapeHtml(character.notes)}</textarea></label>
-    <p class="muted">Appears in ${appearances.length} scene${appearances.length === 1 ? '' : 's'}.</p>
+    <p class="muted">Appears in ${appearances.length} scene${appearances.length === 1 ? '' : 's'} and links to ${reveals.length} reveal${reveals.length === 1 ? '' : 's'}.</p>
     <div class="mini-list">
       ${appearances.length
         ? appearances
@@ -716,6 +798,44 @@ function renderLocationEditor(project: StoryProject, location: Location) {
       ${references.length
         ? references
             .map((scene) => `<button class="search-result" data-action="open-scene-from-location" data-scene-id="${scene.id}" data-chapter-id="${scene.chapterId}"><strong>${scene.order}. ${escapeHtml(scene.title)}</strong><span>${escapeHtml(scene.timeLabel || 'Unscheduled')}</span><span class="search-result-hint">Open in scene editor</span></button>`)
+            .join('')
+        : '<p class="muted">No linked scenes yet.</p>'}
+    </div>
+  `
+}
+
+function renderRevealEditor(project: StoryProject, reveal: RevealRecord) {
+  const linkedScenes = sortedScenes(project).filter((scene) => reveal.sceneIds.includes(scene.id))
+  return `
+    <div class="section-head inline-head">
+      <h3>Reveal editor</h3>
+      <button class="danger" data-action="delete-reveal" data-reveal-id="${reveal.id}">Delete</button>
+    </div>
+    <label>Title<input id="reveal-title" value="${escapeAttr(reveal.title)}" /></label>
+    <label>Reveal point<input id="reveal-point" value="${escapeAttr(reveal.revealPoint)}" /></label>
+    <label>Underlying truth<textarea id="reveal-truth">${escapeHtml(reveal.underlyingTruth)}</textarea></label>
+    <label>Public story<textarea id="reveal-public-story">${escapeHtml(reveal.publicStory)}</textarea></label>
+    <label>Notes<textarea id="reveal-notes">${escapeHtml(reveal.notes)}</textarea></label>
+    <fieldset class="character-picker">
+      <legend>Linked characters</legend>
+      ${project.characters
+        .map(
+          (character) => `<label class="check-row"><input type="checkbox" value="${character.id}" ${reveal.characterIds.includes(character.id) ? 'checked' : ''} data-reveal-character-toggle /> ${escapeHtml(character.name)}</label>`,
+        )
+        .join('')}
+    </fieldset>
+    <fieldset class="character-picker">
+      <legend>Linked scenes</legend>
+      ${sortedScenes(project)
+        .map(
+          (scene) => `<label class="check-row"><input type="checkbox" value="${scene.id}" ${reveal.sceneIds.includes(scene.id) ? 'checked' : ''} data-reveal-scene-toggle /> ${escapeHtml(`${scene.order}. ${scene.title || 'Untitled scene'}`)}</label>`,
+        )
+        .join('')}
+    </fieldset>
+    <div class="mini-list">
+      ${linkedScenes.length
+        ? linkedScenes
+            .map((scene) => `<button class="search-result" data-action="open-scene-from-reveal" data-scene-id="${scene.id}" data-chapter-id="${scene.chapterId}"><strong>${scene.order}. ${escapeHtml(scene.title)}</strong><span>${escapeHtml(scene.timeLabel || 'Unscheduled')}</span><span class="search-result-hint">Open linked scene in editor</span></button>`)
             .join('')
         : '<p class="muted">No linked scenes yet.</p>'}
     </div>
@@ -981,7 +1101,7 @@ function renderManuscriptScene(project: StoryProject, scene: Scene) {
   `
 }
 
-function bindEvents(project: StoryProject, activeScene?: Scene, activeCharacter?: Character) {
+function bindEvents(project: StoryProject, activeScene?: Scene, activeCharacter?: Character, activeReveal?: RevealRecord) {
   const on = (selector: string, handler: (element: HTMLElement) => void) => {
     document.querySelectorAll<HTMLElement>(selector).forEach((element) => {
       element.addEventListener('click', () => handler(element))
@@ -996,6 +1116,7 @@ function bindEvents(project: StoryProject, activeScene?: Scene, activeCharacter?
       draft.activeSceneId = sortedScenes(nextProject)[0]?.id
       draft.activeCharacterId = nextProject.characters[0]?.id
       draft.activeLocationId = nextProject.locations[0]?.id
+      draft.activeRevealId = nextProject.reveals[0]?.id
     })
   })
 
@@ -1053,6 +1174,11 @@ function bindEvents(project: StoryProject, activeScene?: Scene, activeCharacter?
     draft.activeSceneId = element.dataset.sceneId!
     draft.activeChapterId = element.dataset.chapterId || draft.activeChapterId
   }))
+  on('[data-action="open-scene-from-reveal"]', (element) => update((draft) => {
+    draft.view = 'workspace'
+    draft.activeSceneId = element.dataset.sceneId!
+    draft.activeChapterId = element.dataset.chapterId || draft.activeChapterId
+  }))
   on('[data-action="open-scene-in-manuscript"]', (element) => update((draft) => {
     draft.view = 'manuscript'
     draft.activeSceneId = element.dataset.sceneId!
@@ -1072,6 +1198,7 @@ function bindEvents(project: StoryProject, activeScene?: Scene, activeCharacter?
   on('[data-scene-id]', (element) => update((draft) => { draft.activeSceneId = element.dataset.sceneId! }))
   on('[data-character-id]', (element) => update((draft) => { draft.activeCharacterId = element.dataset.characterId! }))
   on('[data-location-id]', (element) => update((draft) => { draft.activeLocationId = element.dataset.locationId! }))
+  on('[data-reveal-id]', (element) => update((draft) => { draft.activeRevealId = element.dataset.revealId! }))
   on('[data-action="add-chapter"]', () => update(() => {
     const current = getProject()
     const chapter = { id: makeId(), title: `Chapter ${current.chapters.length + 1}`, summary: '', order: current.chapters.length + 1 }
@@ -1102,6 +1229,13 @@ function bindEvents(project: StoryProject, activeScene?: Scene, activeCharacter?
     state.activeLocationId = location.id
     stamp(current)
   }))
+  on('[data-action="add-reveal"]', () => update(() => {
+    const current = getProject()
+    const reveal = { id: makeId(), title: `Reveal ${current.reveals.length + 1}`, underlyingTruth: '', publicStory: '', revealPoint: '', notes: '', sceneIds: [], characterIds: [] }
+    current.reveals.push(reveal)
+    state.activeRevealId = reveal.id
+    stamp(current)
+  }))
   on('[data-action="delete-scene"]', (element) => {
     if (confirm('Delete this scene?')) deleteScene(element.dataset.sceneId!)
   })
@@ -1120,6 +1254,12 @@ function bindEvents(project: StoryProject, activeScene?: Scene, activeCharacter?
     const references = locationReferences(project, locationId)
     const warning = `Delete ${location.name}?\n\nThis will remove the location from the project and clear it from any linked scenes.\n\n${describeReferencedScenes(references)}`
     if (confirm(warning)) deleteLocation(locationId)
+  })
+  on('[data-action="delete-reveal"]', (element) => {
+    const revealId = element.dataset.revealId!
+    const reveal = project.reveals.find((item) => item.id === revealId)
+    if (!reveal) return
+    if (confirm(`Delete ${reveal.title || 'this reveal'}?`)) deleteReveal(revealId)
   })
 
   const importInput = document.getElementById('project-import-file') as HTMLInputElement | null
@@ -1162,6 +1302,28 @@ function bindEvents(project: StoryProject, activeScene?: Scene, activeCharacter?
     bindInput('character-name', (value) => update(() => { activeCharacter.name = value; stamp(project) }))
     bindInput('character-role', (value) => update(() => { activeCharacter.role = value; stamp(project) }))
     bindInput('character-notes', (value) => update(() => { activeCharacter.notes = value; stamp(project) }))
+  }
+
+  if (activeReveal) {
+    bindInput('reveal-title', (value) => update(() => { activeReveal.title = value; stamp(project) }))
+    bindInput('reveal-point', (value) => update(() => { activeReveal.revealPoint = value; stamp(project) }))
+    bindInput('reveal-truth', (value) => update(() => { activeReveal.underlyingTruth = value; stamp(project) }))
+    bindInput('reveal-public-story', (value) => update(() => { activeReveal.publicStory = value; stamp(project) }))
+    bindInput('reveal-notes', (value) => update(() => { activeReveal.notes = value; stamp(project) }))
+    document.querySelectorAll<HTMLInputElement>('[data-reveal-character-toggle]').forEach((checkbox) => {
+      checkbox.addEventListener('change', () => update(() => {
+        const id = checkbox.value
+        activeReveal.characterIds = checkbox.checked ? [...new Set([...activeReveal.characterIds, id])] : activeReveal.characterIds.filter((item) => item !== id)
+        stamp(project)
+      }))
+    })
+    document.querySelectorAll<HTMLInputElement>('[data-reveal-scene-toggle]').forEach((checkbox) => {
+      checkbox.addEventListener('change', () => update(() => {
+        const id = checkbox.value
+        activeReveal.sceneIds = checkbox.checked ? [...new Set([...activeReveal.sceneIds, id])] : activeReveal.sceneIds.filter((item) => item !== id)
+        stamp(project)
+      }))
+    })
   }
 
   const activeLocation = project.locations.find((location) => location.id === state.activeLocationId)

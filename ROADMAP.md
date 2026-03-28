@@ -156,3 +156,7 @@ The next likely gain is either better relevance rules for workspace search, or m
 A new design note, `docs/audit-workflow-productisation-note.md`, now argues for an additional intermediate lane as well: lightweight continuity records, starting with reveal-ledger support rather than jumping straight to heavier relationship modelling.
 
 That note now has a concrete first-pass handoff at `docs/reveal-ledger-implementation-checklist.md`, which scopes the smallest useful coding slice for reveal records.
+
+A first reveal-ledger slice is now in place in the workspace as project-level reveal records with scene and character links, local persistence, and import/export support.
+
+The next continuation point is either tiny integrations, like reveal-aware scene or character badges, or a deeper second-pass model once real use exposes the right pressure points.
