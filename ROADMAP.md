@@ -173,6 +173,8 @@ Workspace search now also gives a small match summary, which makes result piles 
 
 A one-click clear control is now in place too, which makes repeated inspection loops a little less fiddly.
 
+Timeline cards now also surface reveal-link counts, which helps continuity records show up in chronology inspection instead of living only in workspace-specific surfaces.
+
 The next likely product-facing gain is either another small relevance improvement or more structural ranking inside meetings.
 
 Meetings ranking is now slightly more opinionated too, because active ensemble pairs sort ahead of merely historical pair frequency.

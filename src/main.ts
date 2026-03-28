@@ -962,6 +962,7 @@ function renderTimeline(project: StoryProject, scenes: Scene[]) {
                 const chapter = sceneChapter(project, scene)
                 const location = sceneLocation(project, scene)
                 const cast = scene.characterIds.map((id) => characterById(project, id)?.name).filter(Boolean).join(', ')
+                const revealCount = sceneRevealLinks(project, scene.id).length
                 return `
                   <article class="timeline-card timeline-card-clickable ${scene.id === activeSceneId ? 'active-arrival' : ''}" data-action="open-scene-from-timeline" data-scene-id="${scene.id}" data-chapter-id="${scene.chapterId}">
                     <div class="timeline-order">${scene.order}</div>
@@ -973,6 +974,7 @@ function renderTimeline(project: StoryProject, scenes: Scene[]) {
                         <span>${escapeHtml(location?.name || 'No location')}</span>
                         <span>${escapeHtml(scene.status)}</span>
                         <span>${escapeHtml(cast || 'No characters')}</span>
+                        <span>${revealCount} reveal link${revealCount === 1 ? '' : 's'}</span>
                       </div>
                       <p class="muted timeline-hint">${scene.id === activeSceneId ? 'Current scene' : 'Open in workspace'}</p>
                     </div>

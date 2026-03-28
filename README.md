@@ -27,7 +27,7 @@ Why:
 - structured scene editor with summary, draft text, timeline label, chapter assignment, status, location, character presence, and direct jumps to manuscript, timeline, and meetings views
 - character inspector showing scene appearances with direct jump into scene editing
 - timeline view showing scene order, chapter, location, cast, and status
-- timeline search and filtering by text, character, location, and status, with filter state preserved while navigating and active-scene highlighting after view jumps
+- timeline search and filtering by text, character, location, and status, with filter state preserved while navigating, reveal-link hints on cards, and active-scene highlighting after view jumps
 - character meetings view showing who shares scenes and how often, with active-pair highlighting for clean two-character arrivals, cast-pair highlighting plus titled, time-aware, and location-aware cast-context notes for larger scenes, an active ensemble summary panel for scenes with three or more characters, a stronger ranking bias toward active ensemble pairs, a small ranking explanation note that degrades cleanly when no active-scene context exists, and a return path to the current scene editor
 - product design notes exploring how continuity-audit workflows could feed back into future first-class Yggsii features, including lightweight reveal-ledger support and evaluation of when not to overbuild it
 - first-pass reveal-ledger support in the workspace, with project-level reveal records, scene and character linking, local persistence, import/export round-tripping, reveal-aware workspace search, scene-list linkage hints, and lightweight inspector badges for linked reveal records
