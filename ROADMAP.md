@@ -154,3 +154,5 @@ That ensemble summary panel is now in place in meetings view, along with clearer
 The next likely gain is either better relevance rules for workspace search, or more structural ranking inside meetings so active-scene pairs and historically important pairs separate more cleanly.
 
 A new design note, `docs/audit-workflow-productisation-note.md`, now argues for an additional intermediate lane as well: lightweight continuity records, starting with reveal-ledger support rather than jumping straight to heavier relationship modelling.
+
+That note now has a concrete first-pass handoff at `docs/reveal-ledger-implementation-checklist.md`, which scopes the smallest useful coding slice for reveal records.

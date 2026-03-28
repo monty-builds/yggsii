@@ -118,6 +118,10 @@ The roadmap should stop treating all future continuity intelligence as generic r
 There is now a clearer intermediate lane:
 light continuity records, starting with reveals and knowledge-state structure.
 
+## Implementation handoff
+
+A concrete first-pass build checklist now lives at `docs/reveal-ledger-implementation-checklist.md`.
+
 ## Short conclusion
 
 The service thread did its job.
