@@ -162,3 +162,5 @@ A first reveal-ledger slice is now in place in the workspace as project-level re
 Tiny reveal-aware integrations are now in place too, including workspace search results for reveal records, scene-list linkage hints, and lightweight inspector badges for linked reveal records.
 
 The next continuation point is either a deeper second-pass model once real use exposes the right pressure points, or a pause to evaluate whether the current reveal surface is already enough signal for now.
+
+That evaluation now lives at `docs/reveal-surface-evaluation.md`, with the current recommendation being restraint: small reveal-aware integrations are still sensible, but a heavier second-pass model should wait for a real pressure point.
