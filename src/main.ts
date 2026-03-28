@@ -598,17 +598,25 @@ function workspaceSearchResults(project: StoryProject, query: string): Workspace
   if (!needle) return []
 
   const sceneResults = sortedScenes(project)
-    .map((scene) => ({
-      scene,
-      score: scoreMatch(scene.title, scene.summary, scene.content, scene.timeLabel)(needle),
-    }))
+    .map((scene) => {
+      const castNames = scene.characterIds.map((id) => characterById(project, id)?.name || '').filter(Boolean)
+      const locationName = sceneLocation(project, scene)?.name || ''
+      const chapterTitle = sceneChapter(project, scene)?.title || 'No chapter'
+      return {
+        scene,
+        chapterTitle,
+        locationName,
+        castNames,
+        score: scoreMatch(scene.title, scene.summary, scene.content, scene.timeLabel, chapterTitle, locationName, ...castNames)(needle),
+      }
+    })
     .filter(({ score }) => score > 0)
-    .map(({ scene, score }) => ({
+    .map(({ scene, score, chapterTitle, locationName, castNames }) => ({
       type: 'scene' as const,
       id: scene.id,
       chapterId: scene.chapterId,
       title: scene.title || 'Untitled scene',
-      meta: `${scene.timeLabel || 'Unscheduled'} · ${sceneChapter(project, scene)?.title || 'No chapter'}`,
+      meta: `${scene.timeLabel || 'Unscheduled'} · ${chapterTitle}${locationName ? ` · ${locationName}` : ''}${castNames.length ? ` · ${castNames.join(', ')}` : ''}`,
       score,
     }))
 
@@ -641,16 +649,26 @@ function workspaceSearchResults(project: StoryProject, query: string): Workspace
     }))
 
   const revealResults = project.reveals
-    .map((reveal) => ({
-      reveal,
-      score: scoreMatch(reveal.title, reveal.publicStory, reveal.underlyingTruth, reveal.revealPoint, reveal.notes)(needle),
-    }))
+    .map((reveal) => {
+      const linkedSceneTitles = reveal.sceneIds
+        .map((id) => project.scenes.find((scene) => scene.id === id)?.title || '')
+        .filter(Boolean)
+      const linkedCharacterNames = reveal.characterIds
+        .map((id) => characterById(project, id)?.name || '')
+        .filter(Boolean)
+      return {
+        reveal,
+        linkedSceneTitles,
+        linkedCharacterNames,
+        score: scoreMatch(reveal.title, reveal.publicStory, reveal.underlyingTruth, reveal.revealPoint, reveal.notes, ...linkedSceneTitles, ...linkedCharacterNames)(needle),
+      }
+    })
     .filter(({ score }) => score > 0)
-    .map(({ reveal, score }) => ({
+    .map(({ reveal, score, linkedSceneTitles, linkedCharacterNames }) => ({
       type: 'reveal' as const,
       id: reveal.id,
       title: reveal.title || 'Untitled reveal',
-      meta: reveal.revealPoint || 'Reveal record',
+      meta: `${reveal.revealPoint || 'Reveal record'}${linkedSceneTitles.length ? ` · ${linkedSceneTitles.join(', ')}` : ''}${linkedCharacterNames.length ? ` · ${linkedCharacterNames.join(', ')}` : ''}`,
       score,
     }))
 
