@@ -1043,8 +1043,12 @@ function renderMeetings(project: StoryProject, scenes: Scene[]) {
   }
 
   const rows = [...pairs.values()].sort((a, b) => {
+    const aIsEnsemblePair = Boolean(ensemble?.pairIds.has(a.ids))
+    const bIsEnsemblePair = Boolean(ensemble?.pairIds.has(b.ids))
     if (a.active !== b.active) return Number(b.active) - Number(a.active)
-    return b.count - a.count
+    if (aIsEnsemblePair !== bIsEnsemblePair) return Number(bIsEnsemblePair) - Number(aIsEnsemblePair)
+    if (a.count !== b.count) return b.count - a.count
+    return a.names.localeCompare(b.names)
   })
   const locationName = activeScene ? sceneLocation(project, activeScene)?.name : ''
   return `
