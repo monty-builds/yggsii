@@ -955,6 +955,7 @@ function renderTimeline(project: StoryProject, scenes: Scene[]) {
           <label>Status<select id="timeline-status"><option value="">All statuses</option><option value="draft" ${filters.status === 'draft' ? 'selected' : ''}>draft</option><option value="outline" ${filters.status === 'outline' ? 'selected' : ''}>outline</option><option value="revised" ${filters.status === 'revised' ? 'selected' : ''}>revised</option></select></label>
         </div>
         ${chips.length ? `<div class="filter-chip-row">${chips.map((chip) => `<button class="filter-chip" data-action="clear-timeline-filter" data-filter-key="${chip.key}">${escapeHtml(chip.label)} ×</button>`).join('')}</div>` : ''}
+        <p class="muted timeline-filter-note">Text search also looks through linked reveal records.</p>
         <p class="muted">Showing ${filteredScenes.length} of ${scenes.length} scene${scenes.length === 1 ? '' : 's'}.</p>
       </div>
       <div class="timeline-list">

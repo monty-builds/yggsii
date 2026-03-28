@@ -263,6 +263,10 @@ h1, h2, h3, p { margin-top: 0; }
   border-radius: 999px;
   background: var(--accent-soft);
 }
+.timeline-filter-note {
+  margin-top: 0.75rem;
+  margin-bottom: 0.35rem;
+}
 .meeting-grid { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
 .meeting-card { grid-template-columns: 1fr; }
 .meetings-ranking-note {

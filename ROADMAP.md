@@ -177,6 +177,8 @@ Timeline cards now also surface reveal-link counts, which helps continuity recor
 
 Timeline search now also looks through linked reveal text, which makes continuity queries work more naturally from the chronology view.
 
+That behaviour is now explained directly in the timeline filters, so it no longer feels like hidden search magic.
+
 Manuscript scene tags now also surface reveal-link counts, so continuity records are visible in read-through mode as well instead of only in workspace and timeline surfaces.
 
 The next likely product-facing gain is either another small relevance improvement or more structural ranking inside meetings.
