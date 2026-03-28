@@ -222,21 +222,33 @@ let state: AppState = loadState()
 const app = document.querySelector<HTMLDivElement>('#app')!
 
 function loadState(): AppState {
+  const fallback = defaultState()
   const raw = localStorage.getItem(STORAGE_KEY)
-  if (!raw) return defaultState()
+  if (!raw) return fallback
   try {
     const parsed = JSON.parse(raw) as Partial<AppState>
-    if (!parsed.projects?.length) return defaultState()
+    if (!parsed.projects?.length) return fallback
+
+    const projects = parsed.projects.map((project) => normalizeProject(project as StoryProject))
+    const activeProject = projects.find((project) => project.id === parsed.activeProjectId) ?? projects[0]
+
     return {
-      ...defaultState(),
+      ...fallback,
       ...parsed,
+      projects,
+      activeProjectId: activeProject.id,
+      activeChapterId: activeProject.chapters.find((chapter) => chapter.id === parsed.activeChapterId)?.id ?? sortedChapters(activeProject)[0]?.id,
+      activeSceneId: activeProject.scenes.find((scene) => scene.id === parsed.activeSceneId)?.id ?? sortedScenes(activeProject)[0]?.id,
+      activeCharacterId: activeProject.characters.find((character) => character.id === parsed.activeCharacterId)?.id ?? activeProject.characters[0]?.id,
+      activeLocationId: activeProject.locations.find((location) => location.id === parsed.activeLocationId)?.id ?? activeProject.locations[0]?.id,
+      activeRevealId: activeProject.reveals.find((reveal) => reveal.id === parsed.activeRevealId)?.id ?? activeProject.reveals[0]?.id,
       timelineFilters: {
         ...emptyTimelineFilters(),
         ...(parsed.timelineFilters ?? {}),
       },
     }
   } catch {
-    return defaultState()
+    return fallback
   }
 }
 
@@ -279,20 +291,22 @@ function sortedScenes(project: StoryProject) {
 }
 
 function ensureSelections(project: StoryProject) {
-  if (!project.chapters.find((chapter) => chapter.id === state.activeChapterId)) {
-    state.activeChapterId = sortedChapters(project)[0]?.id
+  const safeProject = normalizeProject(project)
+
+  if (!safeProject.chapters.find((chapter) => chapter.id === state.activeChapterId)) {
+    state.activeChapterId = sortedChapters(safeProject)[0]?.id
   }
-  if (!project.scenes.find((scene) => scene.id === state.activeSceneId)) {
-    state.activeSceneId = sortedScenes(project)[0]?.id
+  if (!safeProject.scenes.find((scene) => scene.id === state.activeSceneId)) {
+    state.activeSceneId = sortedScenes(safeProject)[0]?.id
   }
-  if (!project.characters.find((character) => character.id === state.activeCharacterId)) {
-    state.activeCharacterId = project.characters[0]?.id
+  if (!safeProject.characters.find((character) => character.id === state.activeCharacterId)) {
+    state.activeCharacterId = safeProject.characters[0]?.id
   }
-  if (!project.locations.find((location) => location.id === state.activeLocationId)) {
-    state.activeLocationId = project.locations[0]?.id
+  if (!safeProject.locations.find((location) => location.id === state.activeLocationId)) {
+    state.activeLocationId = safeProject.locations[0]?.id
   }
-  if (!project.reveals.find((reveal) => reveal.id === state.activeRevealId)) {
-    state.activeRevealId = project.reveals[0]?.id
+  if (!safeProject.reveals.find((reveal) => reveal.id === state.activeRevealId)) {
+    state.activeRevealId = safeProject.reveals[0]?.id
   }
 }
 
