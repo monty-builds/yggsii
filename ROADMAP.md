@@ -152,3 +152,5 @@ A concrete design note for that next meetings slice now lives at `docs/ensemble-
 That ensemble summary panel is now in place in meetings view, along with clearer highlighting for active-ensemble pair cards.
 
 The next likely gain is either better relevance rules for workspace search, or more structural ranking inside meetings so active-scene pairs and historically important pairs separate more cleanly.
+
+A new design note, `docs/audit-workflow-productisation-note.md`, now argues for an additional intermediate lane as well: lightweight continuity records, starting with reveal-ledger support rather than jumping straight to heavier relationship modelling.

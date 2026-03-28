@@ -29,6 +29,7 @@ Why:
 - timeline view showing scene order, chapter, location, cast, and status
 - timeline search and filtering by text, character, location, and status, with filter state preserved while navigating and active-scene highlighting after view jumps
 - character meetings view showing who shares scenes and how often, with active-pair highlighting for clean two-character arrivals, cast-pair highlighting plus titled, time-aware, and location-aware cast-context notes for larger scenes, an active ensemble summary panel for scenes with three or more characters, and a return path to the current scene editor
+- product design notes exploring how continuity-audit workflows could feed back into future first-class Yggsii features, including lightweight reveal-ledger support
 - read-only manuscript assembly view that compiles chapters, scenes, summaries, and draft text, with direct jump back into scene editing
 - dark mode and light mode toggle
 - local persistence with `localStorage`
