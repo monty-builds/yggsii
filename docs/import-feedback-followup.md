@@ -65,3 +65,5 @@ It is also about whether the app explains weird states clearly enough that a use
 Do not make this the very next overnight code change unless the pass is still small and obvious.
 
 But keep it as the next import-specific safer-editing move when work resumes in daylight.
+
+For the concrete build handoff, see `import-failure-implementation-checklist.md`.
