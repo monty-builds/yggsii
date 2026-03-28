@@ -200,3 +200,5 @@ A first safer-editing slice is now in place too, with clearer scene and reveal d
 Character and location deletion copy is now clearer as well, explicitly framing those actions as record removal plus scene unlinking rather than vague deletion language.
 
 A small import-specific follow-up note now also lives at `docs/import-feedback-followup.md`, keeping the next trust improvement focused on clearer failure reasons and more honest repair messaging when import structure needs normalization.
+
+A quiet-hours guardrail note now also lives at `docs/quiet-hours-editing-bias.md`, explicitly biasing late-night Yggsii work toward safe copy changes and handoffs rather than risky logic edits.
