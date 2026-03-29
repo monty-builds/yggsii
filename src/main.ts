@@ -47,6 +47,17 @@ type RevealRecord = {
   characterIds: Id[]
 }
 
+type Relationship = {
+  id: Id
+  characterA: Id
+  characterB: Id
+  label: string
+  notes: string
+  status: 'active' | 'changed' | 'ended'
+  startsInSceneId?: Id
+  endsInSceneId?: Id
+}
+
 type StoryProject = {
   id: Id
   title: string
@@ -58,6 +69,7 @@ type StoryProject = {
   characters: Character[]
   locations: Location[]
   reveals: RevealRecord[]
+  relationships: Relationship[]
   createdAt: string
   updatedAt: string
 }
@@ -83,6 +95,7 @@ type AppState = {
   activeCharacterId?: Id
   activeLocationId?: Id
   activeRevealId?: Id
+  activeRelationshipId?: Id
   theme: 'dark' | 'light'
   view: 'workspace' | 'timeline' | 'meetings' | 'manuscript'
   timelineFilters: TimelineFilters
@@ -185,6 +198,13 @@ const demoProject = (): StoryProject => {
     },
   ]
 
+  const relationships: Relationship[] = [
+    { id: makeId(), characterA: chars[0].id, characterB: chars[1].id, label: 'ally', notes: 'Unlikely allies bound by a shared secret. Trust is transactional but deepening.', status: 'active', startsInSceneId: scenes[1].id },
+    { id: makeId(), characterA: chars[0].id, characterB: chars[2].id, label: 'rival', notes: 'Political opponents whose goals temporarily align. Neither trusts the other.', status: 'active', startsInSceneId: scenes[2].id },
+    { id: makeId(), characterA: chars[0].id, characterB: chars[3].id, label: 'mentor', notes: 'Cael sees archival talent in Mira and offers guarded guidance.', status: 'active', startsInSceneId: scenes[3].id },
+    { id: makeId(), characterA: chars[1].id, characterB: chars[2].id, label: 'stranger', notes: 'No established relationship yet, but both operate in the same circles.', status: 'active' },
+  ]
+
   return {
     id: makeId(),
     title: 'The Cartography of Roots',
@@ -196,6 +216,7 @@ const demoProject = (): StoryProject => {
     characters: chars,
     locations,
     reveals,
+    relationships,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   }
@@ -211,6 +232,7 @@ const defaultState = (): AppState => {
     activeCharacterId: project.characters[0]?.id,
     activeLocationId: project.locations[0]?.id,
     activeRevealId: project.reveals[0]?.id,
+    activeRelationshipId: project.relationships[0]?.id,
     theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light',
     view: 'workspace',
     timelineFilters: emptyTimelineFilters(),
@@ -242,6 +264,7 @@ function loadState(): AppState {
       activeCharacterId: activeProject.characters.find((character) => character.id === parsed.activeCharacterId)?.id ?? activeProject.characters[0]?.id,
       activeLocationId: activeProject.locations.find((location) => location.id === parsed.activeLocationId)?.id ?? activeProject.locations[0]?.id,
       activeRevealId: activeProject.reveals.find((reveal) => reveal.id === parsed.activeRevealId)?.id ?? activeProject.reveals[0]?.id,
+      activeRelationshipId: activeProject.relationships.find((r) => r.id === parsed.activeRelationshipId)?.id ?? activeProject.relationships[0]?.id,
       timelineFilters: {
         ...emptyTimelineFilters(),
         ...(parsed.timelineFilters ?? {}),
@@ -308,6 +331,9 @@ function ensureSelections(project: StoryProject) {
   if (!safeProject.reveals.find((reveal) => reveal.id === state.activeRevealId)) {
     state.activeRevealId = safeProject.reveals[0]?.id
   }
+  if (!safeProject.relationships.find((r) => r.id === state.activeRelationshipId)) {
+    state.activeRelationshipId = safeProject.relationships[0]?.id
+  }
 }
 
 function createProject() {
@@ -324,6 +350,7 @@ function createProject() {
     characters: [],
     locations: [],
     reveals: [],
+    relationships: [],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   }, true)
@@ -381,6 +408,12 @@ function normalizeProject(project: StoryProject): { project: StoryProject; repai
       sceneIds: Array.isArray(reveal.sceneIds) ? reveal.sceneIds.filter((id) => sceneIds.has(id)) : [],
       characterIds: Array.isArray(reveal.characterIds) ? reveal.characterIds.filter((id) => characterIds.has(id)) : [],
     })),
+    relationships: (project.relationships ?? []).map((r) => ({
+      ...r,
+      characterA: r.characterA || '',
+      characterB: r.characterB || '',
+      status: r.status || 'active',
+    })),
     createdAt: project.createdAt || new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   }
@@ -409,6 +442,7 @@ function importProjectRecord(project: StoryProject, replaceActive = false, repai
     draft.activeCharacterId = normalized.characters[0]?.id
     draft.activeLocationId = normalized.locations[0]?.id
     draft.activeRevealId = normalized.reveals[0]?.id
+    draft.activeRelationshipId = normalized.relationships[0]?.id
   })
   return allRepairs
 }
@@ -494,6 +528,29 @@ function characterRevealLinks(project: StoryProject, characterId: Id) {
   return sortedReveals(project).filter((reveal) => reveal.characterIds.includes(characterId))
 }
 
+function sortedRelationships(project: StoryProject) {
+  return [...project.relationships].sort((a, b) => a.label.localeCompare(b.label) || a.id.localeCompare(b.id))
+}
+
+function characterRelationships(project: StoryProject, characterId: Id) {
+  return sortedRelationships(project).filter((r) => r.characterA === characterId || r.characterB === characterId)
+}
+
+function relationshipLabel(project: StoryProject, charA: Id, charB: Id): string | undefined {
+  const pair = [charA, charB].sort()
+  const found = project.relationships.find((r) => [r.characterA, r.characterB].sort().join('|') === pair.join('|') && r.status === 'active')
+  return found?.label
+}
+
+function deleteRelationship(relationshipId: Id) {
+  update(() => {
+    const project = getProject()
+    project.relationships = project.relationships.filter((r) => r.id !== relationshipId)
+    stamp(project)
+    ensureSelections(project)
+  })
+}
+
 function describeReferencedScenes(scenes: Scene[]) {
   if (!scenes.length) return 'No scenes reference it yet.'
   const preview = scenes.slice(0, 3).map((scene) => `${scene.order}. ${scene.title || 'Untitled scene'}`).join('\n')
@@ -537,6 +594,7 @@ function render() {
   const activeScene = project.scenes.find((scene) => scene.id === state.activeSceneId) ?? sortedScenes(project)[0]
   const activeCharacter = project.characters.find((character) => character.id === state.activeCharacterId) ?? project.characters[0]
   const activeReveal = project.reveals.find((reveal) => reveal.id === state.activeRevealId) ?? sortedReveals(project)[0]
+  const activeRelationship = project.relationships.find((r) => r.id === state.activeRelationshipId) ?? sortedRelationships(project)[0]
   const scenes = sortedScenes(project)
   const chapters = sortedChapters(project)
 
@@ -581,6 +639,7 @@ function render() {
           <div><span>Characters</span><strong>${project.characters.length}</strong></div>
           <div><span>Locations</span><strong>${project.locations.length}</strong></div>
           <div><span>Reveals</span><strong>${project.reveals.length}</strong></div>
+          <div><span>Relationships</span><strong>${project.relationships.length}</strong></div>
         </section>
       </aside>
 
@@ -598,7 +657,7 @@ function render() {
           </div>
         </header>
         <input id="project-import-file" type="file" accept="application/json,.json,.yggsii.json" hidden />
-        ${state.view === 'workspace' ? renderWorkspace(project, chapters, scenes, activeScene, activeCharacter, activeReveal) : ''}
+        ${state.view === 'workspace' ? renderWorkspace(project, chapters, scenes, activeScene, activeCharacter, activeReveal, activeRelationship) : ''}
         ${state.view === 'timeline' ? renderTimeline(project, scenes) : ''}
         ${state.view === 'meetings' ? renderMeetings(project, scenes) : ''}
         ${state.view === 'manuscript' ? renderManuscript(project, scenes) : ''}
@@ -606,11 +665,11 @@ function render() {
     </div>
   `
 
-  bindEvents(project, activeScene, activeCharacter, activeReveal)
+  bindEvents(project, activeScene, activeCharacter, activeReveal, activeRelationship)
 }
 
 type WorkspaceSearchResult = {
-  type: 'scene' | 'character' | 'location' | 'reveal'
+  type: 'scene' | 'character' | 'location' | 'reveal' | 'relationship'
   id: string
   chapterId?: string
   title: string
@@ -711,15 +770,36 @@ function workspaceSearchResults(project: StoryProject, query: string): Workspace
       score,
     }))
 
-  return [...sceneResults, ...characterResults, ...locationResults, ...revealResults]
+  const relationshipResults = project.relationships
+    .map((r) => {
+      const nameA = characterById(project, r.characterA)?.name || 'Unknown'
+      const nameB = characterById(project, r.characterB)?.name || 'Unknown'
+      return {
+        r,
+        nameA,
+        nameB,
+        score: scoreMatch(nameA, nameB, r.label, r.notes)(needle),
+      }
+    })
+    .filter(({ score }) => score > 0)
+    .map(({ r, score, nameA, nameB }) => ({
+      type: 'relationship' as const,
+      id: r.id,
+      title: `${nameA} and ${nameB}`,
+      meta: `${r.label || 'Relationship'} · ${r.status}`,
+      score,
+    }))
+
+  return [...sceneResults, ...characterResults, ...locationResults, ...revealResults, ...relationshipResults]
     .sort((a, b) => b.score - a.score || a.title.localeCompare(b.title))
     .slice(0, 12)
 }
 
-function renderWorkspace(project: StoryProject, chapters: Chapter[], scenes: Scene[], activeScene?: Scene, activeCharacter?: Character, activeReveal?: RevealRecord) {
+function renderWorkspace(project: StoryProject, chapters: Chapter[], scenes: Scene[], activeScene?: Scene, activeCharacter?: Character, activeReveal?: RevealRecord, activeRelationship?: Relationship) {
   const activeLocation = project.locations.find((location) => location.id === state.activeLocationId) ?? project.locations[0]
   const results = workspaceSearchResults(project, state.workspaceQuery)
   const revealRows = sortedReveals(project)
+  const relationshipRows = sortedRelationships(project)
   const resultSummary = results.length
     ? `${results.length} match${results.length === 1 ? '' : 'es'} across ${new Set(results.map((result) => result.type)).size} section${new Set(results.map((result) => result.type)).size === 1 ? '' : 's'}`
     : 'No workspace matches yet.'
@@ -733,12 +813,14 @@ function renderWorkspace(project: StoryProject, chapters: Chapter[], scenes: Sce
           ${state.workspaceQuery.trim() ? `<p class="muted search-summary">${escapeHtml(resultSummary)}</p>` : ''}
           ${state.workspaceQuery.trim()
             ? results.length
-              ? `${(['scene', 'character', 'location', 'reveal'] as const)
+              ? `${(['scene', 'character', 'location', 'reveal', 'relationship'] as const)
                   .map((type) => {
                     const rows = results.filter((result) => result.type === type)
                     if (!rows.length) return ''
-                    return `<div class="search-group"><p class="eyebrow">${type === 'scene' ? 'Scenes' : type === 'character' ? 'Characters' : type === 'location' ? 'Locations' : 'Reveals'}</p><div class="mini-list search-results">${rows
-                      .map((result) => `<button class="search-result" data-action="open-search-result" data-result-type="${result.type}" data-result-id="${result.id}" data-chapter-id="${result.chapterId || ''}"><strong>${escapeHtml(result.title)}</strong><span>${escapeHtml(result.type)} · ${escapeHtml(result.meta)}</span><span class="search-result-hint">${result.type === 'location' ? 'Open in workspace location inspector' : result.type === 'reveal' ? 'Open in workspace reveal editor' : 'Open in workspace'} · rank ${result.score}</span></button>`)
+                    const typeLabel = type === 'scene' ? 'Scenes' : type === 'character' ? 'Characters' : type === 'location' ? 'Locations' : type === 'reveal' ? 'Reveals' : 'Relationships'
+                    const typeHint = type === 'location' ? 'Open in workspace location inspector' : type === 'reveal' ? 'Open in workspace reveal editor' : type === 'relationship' ? 'Open in workspace relationship inspector' : 'Open in workspace'
+                    return `<div class="search-group"><p class="eyebrow">${typeLabel}</p><div class="mini-list search-results">${rows
+                      .map((result) => `<button class="search-result" data-action="open-search-result" data-result-type="${result.type}" data-result-id="${result.id}" data-chapter-id="${result.chapterId || ''}"><strong>${escapeHtml(result.title)}</strong><span>${escapeHtml(result.type)} · ${escapeHtml(result.meta)}</span><span class="search-result-hint">${typeHint} · rank ${result.score}</span></button>`)
                       .join('')}</div></div>`
                   })
                   .join('')}`
@@ -809,6 +891,19 @@ function renderWorkspace(project: StoryProject, chapters: Chapter[], scenes: Sce
             : '<p class="muted">No reveal records yet.</p>'}
         </div>
         ${activeReveal ? renderRevealEditor(project, activeReveal) : '<p class="muted">No reveal selected yet.</p>'}
+        <div class="section-head locations-head"><h3>Relationships</h3><button data-action="add-relationship">Add relationship</button></div>
+        <div class="reveal-list mini-list">
+          ${relationshipRows.length
+            ? relationshipRows
+                .map((r) => {
+                  const nameA = characterById(project, r.characterA)?.name || 'Unknown'
+                  const nameB = characterById(project, r.characterB)?.name || 'Unknown'
+                  return `<button class="search-result ${r.id === activeRelationship?.id ? 'active' : ''}" data-relationship-id="${r.id}"><strong>${escapeHtml(nameA)} and ${escapeHtml(nameB)}</strong><span>${escapeHtml(r.label || 'Unlabeled')} · ${r.status}</span><span class="search-result-hint">${escapeHtml(r.notes || 'No notes')}</span></button>`
+                })
+                .join('')
+            : '<p class="muted">No relationship records yet.</p>'}
+        </div>
+        ${activeRelationship ? renderRelationshipEditor(project, activeRelationship) : '<p class="muted">No relationship selected yet.</p>'}
       </div>
     </section>
   `
@@ -857,6 +952,7 @@ function renderSceneEditor(project: StoryProject, scene: Scene) {
 function renderCharacterEditor(project: StoryProject, character: Character) {
   const appearances = characterAppearances(project, character.id)
   const reveals = characterRevealLinks(project, character.id)
+  const relationships = characterRelationships(project, character.id)
   return `
     <div class="section-head inline-head">
       <h3>Character editor</h3>
@@ -865,8 +961,9 @@ function renderCharacterEditor(project: StoryProject, character: Character) {
     <label>Name<input id="character-name" value="${escapeAttr(character.name)}" /></label>
     <label>Role<input id="character-role" value="${escapeAttr(character.role)}" /></label>
     <label>Notes<textarea id="character-notes">${escapeHtml(character.notes)}</textarea></label>
-    <p class="muted">Appears in ${appearances.length} scene${appearances.length === 1 ? '' : 's'} and links to ${reveals.length} reveal${reveals.length === 1 ? '' : 's'}.</p>
+    <p class="muted">Appears in ${appearances.length} scene${appearances.length === 1 ? '' : 's'}, links to ${reveals.length} reveal${reveals.length === 1 ? '' : 's'}, and has ${relationships.length} relationship${relationships.length === 1 ? '' : 's'}.</p>
     ${reveals.length ? `<div class="tag-row reveal-badge-row">${reveals.map((reveal) => `<button class="reveal-badge" data-reveal-id="${reveal.id}">${escapeHtml(reveal.title || 'Untitled reveal')}</button>`).join('')}</div>` : ''}
+    ${relationships.length ? `<div class="tag-row reveal-badge-row">${relationships.map((r) => { const otherId = r.characterA === character.id ? r.characterB : r.characterA; const otherName = characterById(project, otherId)?.name || 'Unknown'; return `<button class="reveal-badge" data-relationship-id="${r.id}">${escapeHtml(r.label)} with ${escapeHtml(otherName)}</button>` }).join('')}</div>` : ''}
     <div class="mini-list">
       ${appearances.length
         ? appearances
@@ -874,6 +971,44 @@ function renderCharacterEditor(project: StoryProject, character: Character) {
             .join('')
         : '<p class="muted">No scene appearances yet.</p>'}
     </div>
+  `
+}
+
+function renderRelationshipEditor(project: StoryProject, relationship: Relationship) {
+  const nameA = characterById(project, relationship.characterA)?.name || 'Unknown'
+  const nameB = characterById(project, relationship.characterB)?.name || 'Unknown'
+  const characterOptions = project.characters
+    .map((c) => `<option value="${c.id}" ${c.id === relationship.characterA ? 'selected' : ''}>${escapeHtml(c.name)}</option>`)
+    .join('')
+  const characterBOptions = project.characters
+    .filter((c) => c.id !== relationship.characterA)
+    .map((c) => `<option value="${c.id}" ${c.id === relationship.characterB ? 'selected' : ''}>${escapeHtml(c.name)}</option>`)
+    .join('')
+  const sceneOptions = [`<option value="">None</option>`]
+    .concat(project.scenes.map((s) => `<option value="${s.id}" ${s.id === relationship.startsInSceneId ? 'selected' : ''}>${escapeHtml(s.order + '. ' + (s.title || 'Untitled scene'))}</option>`))
+    .join('')
+  const endSceneOptions = [`<option value="">None</option>`]
+    .concat(project.scenes.map((s) => `<option value="${s.id}" ${s.id === relationship.endsInSceneId ? 'selected' : ''}>${escapeHtml(s.order + '. ' + (s.title || 'Untitled scene'))}</option>`))
+    .join('')
+  return `
+    <div class="section-head inline-head">
+      <h3>Relationship editor</h3>
+      <button class="danger" data-action="delete-relationship" data-relationship-id="${relationship.id}">Delete</button>
+    </div>
+    <label>Character A<select id="rel-char-a">${characterOptions}</select></label>
+    <label>Character B<select id="rel-char-b">${characterBOptions}</select></label>
+    <label>Label<input id="rel-label" value="${escapeAttr(relationship.label)}" placeholder="e.g. ally, rival, family" /></label>
+    <label>Notes<textarea id="rel-notes">${escapeHtml(relationship.notes)}</textarea></label>
+    <div class="split-2">
+      <label>Status<select id="rel-status">
+        <option value="active" ${relationship.status === 'active' ? 'selected' : ''}>Active</option>
+        <option value="changed" ${relationship.status === 'changed' ? 'selected' : ''}>Changed</option>
+        <option value="ended" ${relationship.status === 'ended' ? 'selected' : ''}>Ended</option>
+      </select></label>
+    </div>
+    <label>Starts in scene<select id="rel-start-scene">${sceneOptions}</select></label>
+    <label>Ends in scene<select id="rel-end-scene">${endSceneOptions}</select></label>
+    <p class="muted">${escapeHtml(nameA)} and ${escapeHtml(nameB)} · ${escapeHtml(relationship.label)} · ${relationship.status}</p>
   `
 }
 
@@ -1132,9 +1267,11 @@ function renderMeetings(project: StoryProject, scenes: Scene[]) {
         ${rows.length
           ? rows
               .map(
-                (row) => `<article class="meeting-card ${row.active ? 'active-arrival' : ''} ${ensemble?.pairIds.has(row.ids) ? 'ensemble-pair' : ''}"><h3>${escapeHtml(row.names)}</h3><strong>${row.count} shared scene${row.count === 1 ? '' : 's'}</strong><p>${escapeHtml(row.moments.join(' • '))}</p><p class="muted timeline-hint">${ensemble?.pairIds.has(row.ids) ? 'Active ensemble pair' : row.active ? (activeNames.length > 2 ? 'Current scene cast pair' : 'Current scene pair') : ''}</p></article>`,
-              )
-              .join('')
+                (row) => {
+                  const relLabel = relationshipLabel(project, row.ids.split('|')[0], row.ids.split('|')[1])
+                  return `<article class="meeting-card ${row.active ? 'active-arrival' : ''} ${ensemble?.pairIds.has(row.ids) ? 'ensemble-pair' : ''}"><h3>${escapeHtml(row.names)}</h3>${relLabel ? `<span class="tag-row"><span>${escapeHtml(relLabel)}</span></span>` : ''}<strong>${row.count} shared scene${row.count === 1 ? '' : 's'}</strong><p>${escapeHtml(row.moments.join(' • '))}</p><p class="muted timeline-hint">${ensemble?.pairIds.has(row.ids) ? 'Active ensemble pair' : row.active ? (activeNames.length > 2 ? 'Current scene cast pair' : 'Current scene pair') : ''}</p></article>`
+                }
+              ).join('')
           : '<p class="muted">No overlapping characters yet. Add multiple characters to a scene and this view will come alive.</p>'}
       </div>
     </section>
@@ -1208,7 +1345,7 @@ function renderManuscriptScene(project: StoryProject, scene: Scene) {
   `
 }
 
-function bindEvents(project: StoryProject, activeScene?: Scene, activeCharacter?: Character, activeReveal?: RevealRecord) {
+function bindEvents(project: StoryProject, activeScene?: Scene, activeCharacter?: Character, activeReveal?: RevealRecord, activeRelationship?: Relationship) {
   const on = (selector: string, handler: (element: HTMLElement) => void) => {
     document.querySelectorAll<HTMLElement>(selector).forEach((element) => {
       element.addEventListener('click', () => handler(element))
@@ -1267,6 +1404,10 @@ function bindEvents(project: StoryProject, activeScene?: Scene, activeCharacter?
       draft.view = 'workspace'
       draft.activeRevealId = resultId
     }
+    if (resultType === 'relationship') {
+      draft.view = 'workspace'
+      draft.activeRelationshipId = resultId
+    }
   }))
   on('[data-action="open-scene-from-location"]', (element) => update((draft) => {
     draft.view = 'workspace'
@@ -1313,6 +1454,7 @@ function bindEvents(project: StoryProject, activeScene?: Scene, activeCharacter?
   on('[data-character-id]', (element) => update((draft) => { draft.activeCharacterId = element.dataset.characterId! }))
   on('[data-location-id]', (element) => update((draft) => { draft.activeLocationId = element.dataset.locationId! }))
   on('[data-reveal-id]', (element) => update((draft) => { draft.activeRevealId = element.dataset.revealId! }))
+  on('[data-relationship-id]', (element) => update((draft) => { draft.activeRelationshipId = element.dataset.relationshipId! }))
   on('[data-action="clear-workspace-query"]', () => update((draft) => { draft.workspaceQuery = '' }))
   on('[data-action="add-chapter"]', () => update(() => {
     const current = getProject()
@@ -1381,6 +1523,32 @@ function bindEvents(project: StoryProject, activeScene?: Scene, activeCharacter?
     const warning = `Delete ${reveal.title || 'this reveal'}?\n\nThis removes the reveal record itself. Linked scenes and characters will stay in the project, but they will no longer reference this reveal.`
     if (confirm(warning)) deleteReveal(revealId)
   })
+  on('[data-action="delete-relationship"]', (element) => {
+    const relationshipId = element.dataset.relationshipId!
+    const relationship = project.relationships.find((item) => item.id === relationshipId)
+    if (!relationship) return
+    const nameA = characterById(project, relationship.characterA)?.name || 'Unknown'
+    const nameB = characterById(project, relationship.characterB)?.name || 'Unknown'
+    const warning = `Delete the relationship between ${nameA} and ${nameB}?\n\nThis removes the relationship record. The characters themselves will stay in the project.`
+    if (confirm(warning)) deleteRelationship(relationshipId)
+  })
+  on('[data-action="add-relationship"]', () => {
+    const current = getProject()
+    if (current.characters.length < 2) { alert('At least two characters are needed to create a relationship.'); return }
+    const relationship: Relationship = {
+      id: makeId(),
+      characterA: current.characters[0].id,
+      characterB: current.characters[1].id,
+      label: '',
+      notes: '',
+      status: 'active',
+    }
+    current.relationships.push(relationship)
+    state.activeRelationshipId = relationship.id
+    stamp(current)
+    saveState()
+    render()
+  })
 
   const importInput = document.getElementById('project-import-file') as HTMLInputElement | null
   if (importInput) {
@@ -1444,6 +1612,16 @@ function bindEvents(project: StoryProject, activeScene?: Scene, activeCharacter?
         stamp(project)
       }))
     })
+  }
+
+  if (activeRelationship) {
+    bindInput('rel-char-a', (value) => update(() => { activeRelationship.characterA = value; stamp(project) }))
+    bindInput('rel-char-b', (value) => update(() => { activeRelationship.characterB = value; stamp(project) }))
+    bindInput('rel-label', (value) => update(() => { activeRelationship.label = value; stamp(project) }))
+    bindInput('rel-notes', (value) => update(() => { activeRelationship.notes = value; stamp(project) }))
+    bindInput('rel-status', (value) => update(() => { activeRelationship.status = value as Relationship['status']; stamp(project) }))
+    bindInput('rel-start-scene', (value) => update(() => { activeRelationship.startsInSceneId = value || undefined; stamp(project) }))
+    bindInput('rel-end-scene', (value) => update(() => { activeRelationship.endsInSceneId = value || undefined; stamp(project) }))
   }
 
   const activeLocation = project.locations.find((location) => location.id === state.activeLocationId)
