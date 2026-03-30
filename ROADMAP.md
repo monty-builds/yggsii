@@ -115,6 +115,10 @@ Tabletop GMs, game writers, and fanfiction writers may be easier early adopters 
 - Should manuscript assembly stay read-only for a while, or support editing early?
 - When portability exists, what is the simplest durable storage upgrade beyond raw localStorage?
 
+## Status
+
+All five planned roadmap items are complete. Yggsii is live at https://monty-builds.github.io/yggsii/ and deploys automatically via GitHub Actions on every push.
+
 ## Progress note
 
 Import and export are now in place.
