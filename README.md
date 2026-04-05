@@ -6,6 +6,8 @@ Yggsii does not try to be your next drafting app. It exists for a different prob
 
 Inspect your story like a system, not a wall of text.
 
+![Yggsii workspace overview](public/hero.png)
+
 ## What it does
 
 Manage projects, chapters, scenes, characters, locations, and reveal records in a structured workspace. Then switch into inspection views that expose what your outline cannot:
