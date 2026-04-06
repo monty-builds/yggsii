@@ -15,6 +15,10 @@ Manage projects, chapters, scenes, characters, locations, and reveal records in 
 - Manuscript view that compiles chapters and scenes into a read-only assembled draft.
 - Workspace-wide search across scenes, characters, locations, and reveal records with ranked results and direct jump navigation.
 
+## Relationship modelling
+
+Explicit character-to-character relationship records with labels (ally, rival, family, secret, debt), notes, and status tracking over time. Relationships appear in character editor badges, workspace search, and meetings view annotations — so you can see who's connected to whom without cross-referencing scenes manually.
+
 ## Reveal ledger
 
 Yggsii has a first-class reveal ledger. Track what your characters know, what the audience thinks they know, and when the truth actually lands. Reveals link to scenes and characters and surface throughout search, timeline, and manuscript views.
